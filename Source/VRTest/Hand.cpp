@@ -164,11 +164,6 @@ void AHand::UpdateNearbyActors()
 		}
 
 		const float DistanceToActor = FVector::Dist(Actor->GetActorLocation(), HandLocation);
-		if (DistanceToActor > (SearchDistance * 3))
-		{
-			continue;
-		}
-
 		if (!Actor->CanGrab(this))
 		{
 			continue;

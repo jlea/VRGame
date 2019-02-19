@@ -123,29 +123,29 @@ bool AFirearm::CanGrab(const AHand* Hand)
 
 void AFirearm::OnBeginInteraction(AHand* Hand)
 {
+	Super::OnBeginInteraction(Hand);
+
 	if (Hand == AttachedHand)
 	{
 		if (LoadedMagazine && LoadedMagazine->CurrentAmmo == 0)
 		{
+			UGameplayStatics::PlaySoundAtLocation(this, DryFireSound, FirearmMesh->GetSocketLocation(MuzzleBone));
 			OnDryFire();
 			return;
 		}
 
 		bTriggerDown = true;
-		return;
 	}
-
-	Super::OnBeginInteraction(Hand);
 }
 
 void AFirearm::OnEndInteraction(AHand* Hand)
 {
+	Super::OnEndInteraction(Hand);
+
 	if (Hand == AttachedHand)
 	{
 		bTriggerDown = false;
 	}
-
-	Super::OnEndInteraction(Hand);
 }
 
 void AFirearm::OnBeginPickup(AHand* Hand)
@@ -249,6 +249,16 @@ void AFirearm::Fire()
 	if (FireAnimation)
 	{
 		FirearmMesh->GetAnimInstance()->Montage_Play(FireAnimation);
+	}
+
+	if (FireSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, FireSound, FirearmMesh->GetSocketLocation(MuzzleBone));
+	}
+
+	if (FireParticle)
+	{
+		UGameplayStatics::SpawnEmitterAttached(FireParticle, FirearmMesh, MuzzleBone);
 	}
 
 	//GEngine->AddOnScreenDebugMessage(3, 1.0f, FColor::Red, FString::Printf(TEXT("%s: BANG!"), *GetName()), true, FVector2D(3.0f, 3.0f));
