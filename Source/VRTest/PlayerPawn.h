@@ -43,6 +43,9 @@ public:
 	void GrabRightPressed();
 	void GrabRightReleased();
 
+	void BulletTimePressed();
+	void BulletTimeReleased();
+
 	//////////////////////////////////////////////////////////////////////////
 	//	Misc
 
@@ -78,4 +81,25 @@ public:
 
 	FVector LastScopePosition;
 	FRotator LastScopeRotation;
+
+	//////////////////////////////////////////////////////////////////////////
+	//	Bullet time
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Bullet Time")
+	void OnBulletTimeBegin();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Bullet Time")
+	void OnBulletTimeFinish();
+
+	UPROPERTY(BlueprintReadOnly, Category = "Bullet Time")
+	bool bBulletTime;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Bullet Time")
+	float CurrentTimeDilation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bullet Time")
+	float BulletTimeInterpSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bullet Time")
+	float BulletTimeModifier;
 };

@@ -2,6 +2,7 @@
 
 #include "PlayerPawn.h"
 #include "Firearm.h"
+#include "Kismet/GameplayStatics.h"
 #include "Classes/Camera/CameraComponent.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "Hand.h"
@@ -22,6 +23,10 @@ APlayerPawn::APlayerPawn()
 
 	ScopeInterpSpeed = 5.0f;
 	CameraHeightOffset = 0.0f;
+
+	CurrentTimeDilation = 1.0f;
+	BulletTimeModifier = 0.35f;
+	BulletTimeInterpSpeed = 12.0f;
 }
 
 // Called when the game starts or when spawned
@@ -60,6 +65,19 @@ void APlayerPawn::Tick(float DeltaTime)
 
 		ScopeCaptureComponent->SetRelativeRotation(MuzzleRotation);
 	}
+
+	float TargetTimeDilation = 1.0f;
+	if (bBulletTime)
+	{
+		TargetTimeDilation = BulletTimeModifier;
+	}
+
+	if(CurrentTimeDilation != TargetTimeDilation)
+	{
+		CurrentTimeDilation = FMath::FInterpTo(CurrentTimeDilation, TargetTimeDilation, DeltaTime, BulletTimeInterpSpeed);
+
+		UGameplayStatics::SetGlobalTimeDilation(this, TargetTimeDilation);
+	}
 }
 
 // Called to bind functionality to input
@@ -70,12 +88,13 @@ void APlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	InputComponent->BindAction("DropLeft", IE_Pressed, this, &APlayerPawn::DropLeftPressed);
 	InputComponent->BindAction("DropRight", IE_Pressed, this, &APlayerPawn::DropRightPressed);
 
-
 	InputComponent->BindAction("GrabLeft", IE_Pressed, this, &APlayerPawn::GrabLeftPressed);
 	InputComponent->BindAction("GrabLeft", IE_Released, this, &APlayerPawn::GrabLeftReleased);
 
 	InputComponent->BindAction("GrabRight", IE_Pressed, this, &APlayerPawn::GrabRightPressed);
 	InputComponent->BindAction("GrabRight", IE_Released, this, &APlayerPawn::GrabRightReleased);
+
+	InputComponent->BindAction("BulletTime", IE_Pressed, this, &APlayerPawn::BulletTimePressed);
 }
 
 void APlayerPawn::DropLeftPressed()
@@ -106,6 +125,22 @@ void APlayerPawn::GrabRightPressed()
 void APlayerPawn::GrabRightReleased()
 {
 	RightHand->OnGrabReleased();
+}
+
+void APlayerPawn::BulletTimePressed()
+{
+	if (!bBulletTime)
+	{
+		bBulletTime = true;
+		OnBulletTimeBegin();
+		UGameplayStatics::SetGlobalPitchModulation(this, BulletTimeModifier, 1.5f);
+	}
+	else
+	{
+		bBulletTime = false;
+		OnBulletTimeFinish();
+		UGameplayStatics::SetGlobalPitchModulation(this, 1.0f, 1.5f);
+	}
 }
 
 void APlayerPawn::SetScopeFirearm(AFirearm* Firearm)
