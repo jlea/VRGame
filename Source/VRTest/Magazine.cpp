@@ -64,8 +64,6 @@ void AMagazine::OnDrop(AHand* Hand)
 	{
 		// Hand is holding us close to an empty magazine port, load us in
 		LoadableFirearm->LoadMagazine(this);
-		AttachedHand = nullptr;
-		return;
 	}
 }
 

@@ -6,12 +6,14 @@
 
 APumpActionFirearm::APumpActionFirearm()
 {
-	bHasEjectedRound = true;
-	bHasPumped = true;
+	bHasPumped = false;
 	bEjectRoundOnFire = false;
+	bHasInternalMagazine = true;
 
 	PumpStartSocket = TEXT("PumpStart");
 	PumpEndSocket = TEXT("PumpEnd");
+
+	AmmoLoadType = EFirearmAmmoLoadType::PumpAction;
 }
 
 void APumpActionFirearm::OnBeginInteraction(AHand* Hand)
@@ -27,40 +29,37 @@ void APumpActionFirearm::Tick(float DeltaTime)
 	{
 		const FVector StartLocation = FirearmMesh->GetSocketLocation(PumpStartSocket);
 		const FVector EndLocation = FirearmMesh->GetSocketLocation(PumpEndSocket);
-
 		const FVector HandLocation = InteractingHand->GetHandSelectionOrigin();
-
 		const FVector ClosestPoint = FMath::ClosestPointOnLine(StartLocation, EndLocation, HandLocation);
 
-		DrawDebugSphere(GetWorld(), ClosestPoint, 5.0f, 8, FColor::Red, false, 0.1f);
+		//DrawDebugSphere(GetWorld(), ClosestPoint, 5.0f, 8, FColor::Red, false, 0.1f);
 
 		const float DistanceToStart = FVector::Dist2D(ClosestPoint, StartLocation);
 		const float DistanceToEnd = FVector::Dist2D(ClosestPoint, EndLocation);
 
 		const float DistanceBetweenSockets = FVector::Dist2D(StartLocation, EndLocation);
-
 		const float Ratio = 1.0f - (DistanceToStart / DistanceBetweenSockets);
 
 		PumpProgress = Ratio;
 
-		UE_LOG(LogTemp, Warning, TEXT("Distance to start and end: %g %g"), DistanceToStart, DistanceToEnd);
-
 		// Pumping it?
-		if (!bHasEjectedRound)
+		if (!bHasPumped)
 		{
 			if (PumpProgress >= 1.0)
 			{
-				bHasEjectedRound = true;
-
+				EjectRound();
 				OnPumpBack();
+
+				bHasPumped = true;
 			}
 		}
-		else if(bHasEjectedRound && !bHasPumped)
+		else
 		{
 			if (PumpProgress <= 0.0f)
 			{
-				bHasPumped = true;
+				bHasPumped = false;
 
+				LoadRoundFromMagazine();
 				OnPumpForward();
 			}
 		}
@@ -70,23 +69,10 @@ void APumpActionFirearm::Tick(float DeltaTime)
 
 bool APumpActionFirearm::CanFire()
 {
-	if (!bHasPumped)
-	{
-		return false;
-	}
-
-	if (!bHasEjectedRound)
-	{
-		return false;
-	}
-
 	return Super::CanFire();
 }
 
 void APumpActionFirearm::Fire()
 {
 	Super::Fire();
-
-	bHasEjectedRound = false;
-	bHasPumped = false;
 }

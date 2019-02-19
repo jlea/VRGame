@@ -26,7 +26,14 @@ void AVRHUD::DrawHUD()
 		auto HeldFirearm = Cast<AFirearm>(Hand->GetInteractingActor());
 		if (HeldFirearm)
 		{
-			
+			auto HeldMagazine = HeldFirearm->LoadedMagazine;
+			if (HeldMagazine)
+			{
+				FString MagazineAmmoText = FString::Printf(TEXT("%d / %d"), HeldMagazine->CurrentAmmo, HeldMagazine->AmmoCount);
+				FVector MagLocation = Canvas->Project(HeldMagazine->GetActorLocation());
+
+				//DrawText(MagazineAmmoText, FColor::White, MagLocation.X, MagLocation.Y, nullptr, 4.0f);
+			}
 		}
 
 		auto HeldMagazine = Cast<AMagazine>(Hand->GetInteractingActor());
@@ -35,7 +42,7 @@ void AVRHUD::DrawHUD()
 			FString MagazineAmmoText = FString::Printf(TEXT("%d / %d"), HeldMagazine->CurrentAmmo, HeldMagazine->AmmoCount);
 			FVector MagLocation = Canvas->Project(HeldMagazine->GetActorLocation());
 
-			DrawText(MagazineAmmoText, FColor::White, MagLocation.X, MagLocation.Y, nullptr, 4.0f);
+			//DrawText(MagazineAmmoText, FColor::White, MagLocation.X, MagLocation.Y, nullptr, 4.0f);
 		}
 
 		for (auto NearbyActor : Hand->GetNearbyActors())

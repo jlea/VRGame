@@ -31,10 +31,14 @@ AFirearm::AFirearm()
 
 	//MagazinePreviewMesh = CreateDefaultSubobject<USkeletalMeshComponent>("MagazinePreviewMesh");
 	//MagazinePreviewMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
+	
+	BulletsPerShot = 1;
 	FireRate = 600.0f;
-	bAutomatic = true;
+	Spread = 0.0f;
+	AmmoLoadType = EFirearmAmmoLoadType::Automatic;
+	ChamberedRoundStatus = EChamberedRoundStatus::NoRound;
 	bStartWithMagazine = true;
+	bHasInternalMagazine = false;
 
 	LoadedMagazine = nullptr;
 
@@ -73,6 +77,7 @@ void AFirearm::BeginPlay()
 
 		auto NewMagazine = GetWorld()->SpawnActor<AMagazine>(DefaultMagazineClass, GetActorTransform(), SpawnParams);
 		LoadMagazine(NewMagazine);
+		LoadRoundFromMagazine();
 	}
 	else
 	{
@@ -87,7 +92,7 @@ void AFirearm::Tick(float DeltaTime)
 
 	if (bTriggerDown)
 	{
-		if (bAutomatic)
+		if (AmmoLoadType == EFirearmAmmoLoadType::Automatic)
 		{
 			if (CanFire())
 			{
@@ -109,7 +114,7 @@ void AFirearm::Tick(float DeltaTime)
 	else
 	{
 		// Single action weapon
-		if (!bAutomatic && bHasFired)
+		if (AmmoLoadType != EFirearmAmmoLoadType::Automatic && bHasFired)
 		{
 			bHasFired = false;
 		}
@@ -134,7 +139,7 @@ void AFirearm::OnBeginInteraction(AHand* Hand)
 
 	if (Hand == AttachedHand)
 	{
-		if (LoadedMagazine && LoadedMagazine->CurrentAmmo == 0)
+		if (ChamberedRoundStatus == EChamberedRoundStatus::NoRound)
 		{
 			UGameplayStatics::PlaySoundAtLocation(this, DryFireSound, FirearmMesh->GetSocketLocation(MuzzleBone));
 			OnDryFire();
@@ -228,16 +233,9 @@ bool AFirearm::CanFire()
 		return false;
 	}
 
-	if (!LoadedMagazine)
+	if (ChamberedRoundStatus != EChamberedRoundStatus::Fresh)
 	{
 		return false;
-	}
-	else
-	{
-		if (LoadedMagazine->CurrentAmmo == 0)
-		{
-			return false;
-		}
 	}
 
 	return true;
@@ -275,13 +273,18 @@ void AFirearm::Fire()
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = this;
 
-	auto Projectile = GetWorld()->SpawnActor<AActor>(ProjectileClass, MuzzleTransform, SpawnParams);
+	for (int i = 0; i < BulletsPerShot; i++)
+	{
+		FVector SpawnLocation = MuzzleTransform.GetLocation();
+		FRotator SpawnRotation = MuzzleTransform.GetRotation().Rotator() + FRotator(FMath::RandRange(-Spread, Spread), FMath::RandRange(-Spread, Spread), 0.0f);
+
+		auto Projectile = GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnLocation, SpawnRotation, SpawnParams);
+	}
 
 	LastFireTime = GetWorld()->GetTimeSeconds();
 
 	bHasFired = true;
-
-	LoadedMagazine->CurrentAmmo--;
+	ChamberedRoundStatus = EChamberedRoundStatus::Spent;
 
 	if (bEjectRoundOnFire)
 	{
@@ -289,19 +292,50 @@ void AFirearm::Fire()
 	}
 
 	OnFire();
+
+	// Load the next round in if we have one
+	if (AmmoLoadType == EFirearmAmmoLoadType::Automatic || AmmoLoadType == EFirearmAmmoLoadType::SemiAutomatic)
+	{
+		LoadRoundFromMagazine();
+	}
+}
+
+void AFirearm::LoadRoundFromMagazine()
+{
+	if (!LoadedMagazine)
+	{
+		return;
+	}
+
+	if (LoadedMagazine && LoadedMagazine->CurrentAmmo <= 0)
+	{
+		return;
+	}
+
+	LoadedMagazine->CurrentAmmo--;
+	ChamberedRoundStatus = EChamberedRoundStatus::Fresh;
 }
 
 void AFirearm::EjectRound()
 {
-	FTransform SpawnTransform = FirearmMesh->GetSocketTransform(ShellAttachSocket);
+	if (ChamberedRoundStatus != EChamberedRoundStatus::NoRound)
+	{
+		if (CartridgeClass)
+		{
+			FTransform SpawnTransform = FirearmMesh->GetSocketTransform(ShellAttachSocket);
 
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = this;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = this;
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	auto Shell = GetWorld()->SpawnActor<ACartridge>(CartridgeClass, SpawnTransform, SpawnParams);
+			auto Shell = GetWorld()->SpawnActor<ACartridge>(CartridgeClass, SpawnTransform, SpawnParams);
 
-	Shell->GetMesh()->AddImpulse(Shell->GetActorRightVector() * CartridgeEjectVelocity, NAME_None, true);
+			Shell->GetMesh()->AddImpulse(-Shell->GetActorForwardVector() * CartridgeEjectVelocity, NAME_None, true);
+			Shell->OnEjected(ChamberedRoundStatus == EChamberedRoundStatus::Spent);
+		}
+	}
+
+	ChamberedRoundStatus = EChamberedRoundStatus::NoRound;
 }
 
 bool AFirearm::CanLoadMagazine(AMagazine* Magazine)

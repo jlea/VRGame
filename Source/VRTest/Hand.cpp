@@ -163,19 +163,19 @@ void AHand::UpdateNearbyActors()
 			continue;
 		}
 
-		const float DistanceToActor = FVector::Dist(Actor->GetActorLocation(), HandLocation);
-		if (!Actor->CanGrab(this))
+		if (!SphereCollision->IsOverlappingActor(Actor))
 		{
 			continue;
 		}
 
-		if (!SphereCollision->IsOverlappingActor(Actor))
+		if (!Actor->CanGrab(this))
 		{
 			continue;
 		}
 
 		NearbyActors.Add(Actor);
 
+		const float DistanceToActor = FVector::Dist(Actor->GetActorLocation(), HandLocation);
 		if (DistanceToActor < ClosestActorDistance)
 		{
 			ClosestActor = Actor;

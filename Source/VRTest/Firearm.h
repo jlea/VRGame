@@ -19,6 +19,21 @@ class UBoxComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFirearmMagazineEvent, AFirearm*, Firearm, AMagazine*, Magazine);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFirearmEvent, AFirearm*, Firearm);
 
+UENUM(BlueprintType)
+enum class EChamberedRoundStatus : uint8
+{
+	NoRound,
+	Fresh,
+	Spent
+}; 
+
+UENUM(BlueprintType)
+enum class EFirearmAmmoLoadType : uint8
+{
+	SemiAutomatic,
+	Automatic,
+	PumpAction
+};
 
 UCLASS()
 class VRTEST_API AFirearm : public AInteractableActor
@@ -73,6 +88,9 @@ public:
 	virtual bool CanFire();
 
 	virtual void Fire();
+
+	/* Loads a free round from our magazine into the chamber */
+	void LoadRoundFromMagazine();
 
 	/* Removes the chambered round and spawns the cartridge */
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
@@ -143,18 +161,28 @@ public:
 	float CartridgeEjectVelocity;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Gameplay")
-	bool bAutomatic;
+	EFirearmAmmoLoadType AmmoLoadType;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Gameplay")
 	float FireRate;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Gameplay")
-	TSubclassOf<AProjectile> ProjectileClass;
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Weapon Gameplay")
-	bool bStartWithMagazine;
+	float Spread;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Gameplay")
+	int32 BulletsPerShot;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Ammo")
+	TSubclassOf<AProjectile> ProjectileClass;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Weapon Ammo")
+	bool bStartWithMagazine;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Ammo")
 	TSubclassOf<AMagazine> DefaultMagazineClass;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Ammo")
+	bool bHasInternalMagazine;
 
 	UPROPERTY()
 	AMagazine*	LoadedMagazine;
@@ -167,6 +195,8 @@ public:
 	float LastFireTime;
 
 	bool bEjectRoundOnFire;
+
+	EChamberedRoundStatus ChamberedRoundStatus;
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Delegates

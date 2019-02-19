@@ -6,7 +6,6 @@
 #include "Firearm.h"
 #include "PumpActionFirearm.generated.h"
 
-
 /**
  * 
  */
@@ -30,7 +29,6 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Pump Action")
 	void OnPumpForward();
 
-	bool bHasEjectedRound;
 	bool bHasPumped; 
 	
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Pump Action")
