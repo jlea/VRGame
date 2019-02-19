@@ -8,41 +8,42 @@ APumpActionFirearm::APumpActionFirearm()
 {
 	bHasEjectedRound = true;
 	bHasPumped = true;
+
+	PumpStartSocket = TEXT("PumpStart");
+	PumpEndSocket = TEXT("PumpEnd");
 }
 
 void APumpActionFirearm::OnBeginInteraction(AHand* Hand)
 {
 	Super::OnBeginInteraction(Hand);
-
-	if (Hand == InteractingHand)
-	{
-		// Update pump progress
-
-		// Get position of hand between two points
-		const FVector StartLocation = FirearmMesh->GetSocketLocation(PumpStartSocket);
-		const FVector EndLocation = FirearmMesh->GetSocketLocation(PumpEndSocket);
-		
-		const FVector HandLocation = Hand->GetHandSelectionOrigin();
-
-		const FVector ClosestPoint = FMath::ClosestPointOnLine(StartLocation, EndLocation, HandLocation);
-
-		DrawDebugSphere(GetWorld(), ClosestPoint, 5.0f, 8, FColor::Red, false, 0.1f);
-		
-		const float DistanceToStart = FVector::Dist2D(ClosestPoint, StartLocation);
-		const float DistanceToEnd = FVector::Dist2D(ClosestPoint, EndLocation);
-
-
-		UE_LOG(LogTemp, Warning, TEXT("Distance to start and end: %g %g"), DistanceToStart, DistanceToEnd);
-
-	}
 }
 
 void APumpActionFirearm::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (InteractingHand)
+	if (InteractingHand && InteractingHand != AttachedHand)
 	{
+		const FVector StartLocation = FirearmMesh->GetSocketLocation(PumpStartSocket);
+		const FVector EndLocation = FirearmMesh->GetSocketLocation(PumpEndSocket);
+
+		const FVector HandLocation = InteractingHand->GetHandSelectionOrigin();
+
+		const FVector ClosestPoint = FMath::ClosestPointOnLine(StartLocation, EndLocation, HandLocation);
+
+		DrawDebugSphere(GetWorld(), ClosestPoint, 5.0f, 8, FColor::Red, false, 0.1f);
+
+		const float DistanceToStart = FVector::Dist2D(ClosestPoint, StartLocation);
+		const float DistanceToEnd = FVector::Dist2D(ClosestPoint, EndLocation);
+
+		const float DistanceBetweenSockets = FVector::Dist2D(StartLocation, EndLocation);
+
+		const float Ratio = 1.0f - (DistanceToStart / DistanceBetweenSockets);
+
+		PumpProgress = Ratio;
+
+		UE_LOG(LogTemp, Warning, TEXT("Distance to start and end: %g %g"), DistanceToStart, DistanceToEnd);
+
 		// Pumping it?
 		if (!bHasEjectedRound)
 		{

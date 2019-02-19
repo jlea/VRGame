@@ -33,10 +33,10 @@ public:
 	bool bHasEjectedRound;
 	bool bHasPumped; 
 	
-	UPROPERTY(BlueprintReadOnly, Category = "Pump Action")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Pump Action")
 	FName PumpStartSocket;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Pump Action")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Pump Action")
 	FName PumpEndSocket;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Pump Action")
