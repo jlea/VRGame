@@ -13,6 +13,7 @@ class AProjectile;
 class AMagazine;
 class AExtendedCharacter;
 class UAnimMontage;
+class ACartridge;
 class UBoxComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFirearmMagazineEvent, AFirearm*, Firearm, AMagazine*, Magazine);
@@ -73,6 +74,10 @@ public:
 
 	virtual void Fire();
 
+	/* Removes the chambered round and spawns the cartridge */
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	void EjectRound();
+
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnFire();
 
@@ -128,11 +133,14 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon FX")
 	UParticleSystem* FireParticle;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon FX")
-	UParticleSystem* ShellParticle;
-
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Weapon FX")
 	UHapticFeedbackEffect_Base* RecoilEffect;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon FX")
+	TSubclassOf<ACartridge> CartridgeClass;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon FX")
+	float CartridgeEjectVelocity;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Gameplay")
 	bool bAutomatic;
@@ -142,7 +150,6 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Gameplay")
 	TSubclassOf<AProjectile> ProjectileClass;
-
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Weapon Gameplay")
 	bool bStartWithMagazine;
 
@@ -158,6 +165,8 @@ public:
 	bool bHasFired;
 	bool bTriggerDown;
 	float LastFireTime;
+
+	bool bEjectRoundOnFire;
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Delegates

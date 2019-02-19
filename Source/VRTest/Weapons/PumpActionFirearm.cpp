@@ -8,6 +8,7 @@ APumpActionFirearm::APumpActionFirearm()
 {
 	bHasEjectedRound = true;
 	bHasPumped = true;
+	bEjectRoundOnFire = false;
 
 	PumpStartSocket = TEXT("PumpStart");
 	PumpEndSocket = TEXT("PumpEnd");

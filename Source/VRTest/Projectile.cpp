@@ -15,7 +15,7 @@ AProjectile::AProjectile()
 {
 	CollisionSphere = CreateDefaultSubobject<USphereComponent>("CollisionSphere");
 	CollisionSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	CollisionSphere->SetCollisionProfileName(TEXT("BlockAll"));
+	CollisionSphere->SetCollisionProfileName(TEXT("Bullet"));
 	RootComponent = CollisionSphere;
 
 	MovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovement");

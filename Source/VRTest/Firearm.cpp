@@ -10,15 +10,19 @@
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Weapons/Cartridge.h"
 #include "Components/BoxComponent.h"
 
 // Sets default values
 AFirearm::AFirearm()
 {
 	bDropOnRelease = false;
+	bEjectRoundOnFire = true;
 
 	FirearmMesh = CreateDefaultSubobject<USkeletalMeshComponent>("HandMesh");
 	FirearmMesh->SetSimulatePhysics(true);
+	FirearmMesh->SetCollisionProfileName(TEXT("Weapon"));
 
 	MagazineCollisionBox = CreateDefaultSubobject<UBoxComponent>("MagazineCollisionBox");
 	MagazineCollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
@@ -38,6 +42,9 @@ AFirearm::AFirearm()
 	HandAttachSocket = TEXT("WeaponMountSocket");
 	MagazineAttachSocket = TEXT("MagazineAttachSocket");
 	CharacterAttachSocket = TEXT("WeaponSocket");
+	ShellAttachSocket = TEXT("ShellEjectSocket");
+
+	CartridgeEjectVelocity = 2000.0f;
 
 	PickupBones.Add(TEXT("b_gun_Root"));
 	PickupBones.Add(TEXT("b_gun_trigger"));
@@ -276,7 +283,25 @@ void AFirearm::Fire()
 
 	LoadedMagazine->CurrentAmmo--;
 
+	if (bEjectRoundOnFire)
+	{
+		EjectRound();
+	}
+
 	OnFire();
+}
+
+void AFirearm::EjectRound()
+{
+	FTransform SpawnTransform = FirearmMesh->GetSocketTransform(ShellAttachSocket);
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	auto Shell = GetWorld()->SpawnActor<ACartridge>(CartridgeClass, SpawnTransform, SpawnParams);
+
+	Shell->GetMesh()->AddImpulse(Shell->GetActorRightVector() * CartridgeEjectVelocity, NAME_None, true);
 }
 
 bool AFirearm::CanLoadMagazine(AMagazine* Magazine)
