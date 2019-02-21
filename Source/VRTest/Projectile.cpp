@@ -6,6 +6,7 @@
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "ExtendedCharacter.h"
+#include "FX/ImpactEffect.h"
 #include "Components/SphereComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -35,21 +36,34 @@ void AProjectile::BeginPlay()
 	Super::BeginPlay();
 	
 	CollisionSphere->IgnoreActorWhenMoving(GetOwner(), true);
+
+	SetLifeSpan(5.0f);
 }
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	UGameplayStatics::PlaySoundAtLocation(GetWorld(), ImpactSound, GetActorLocation());
-
-	UParticleSystem* FinalImpactParticle = ImpactParticle;
-
-	auto CharacterImpact = Cast<AExtendedCharacter>(OtherActor);
-	if (CharacterImpact)
+	if (ImpactEffect)
 	{
-		FinalImpactParticle = FleshImpactParticle;
+		//Spawn our impact effect
+		FTransform SpawnTransform;
+		SpawnTransform.SetLocation(Hit.ImpactPoint);
+		SpawnTransform.SetRotation(Hit.ImpactNormal.Rotation().Quaternion());
+		ESpawnActorCollisionHandlingMethod CollisionHandle = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		AImpactEffect* EffectActor = GetWorld()->SpawnActorDeferred<AImpactEffect>(ImpactEffect, SpawnTransform, nullptr, nullptr, CollisionHandle);
+		if (EffectActor)
+		{
+			EffectActor->SurfaceHit = Hit;
+			UGameplayStatics::FinishSpawningActor(EffectActor, FTransform(Hit.ImpactNormal.Rotation(), Hit.ImpactPoint));
+// 			auto HitCharacter = Cast<A
+// 			
+// 			if (Character)
+// 			{
+// 				EffectActor->AttachToComponent(Character->GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, Hit.BoneName);
+// 			}
+		}
 	}
 
-	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticle, Hit.ImpactPoint, Hit.ImpactNormal.Rotation());
 	UGameplayStatics::ApplyPointDamage(OtherActor, Damage, NormalImpulse, Hit, GetInstigatorController(), this, DamageType);
 
 	if (OtherComp)

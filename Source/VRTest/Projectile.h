@@ -9,6 +9,7 @@ class UProjectileMovementComponent;
 class USphereComponent;
 class USoundCue;
 class UParticleSystem;
+class AImpactEffect;
 
 UCLASS()
 class VRTEST_API AProjectile : public AActor
@@ -36,21 +37,15 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	UProjectileMovementComponent*	MovementComponent;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Projectile FX")
-	UParticleSystem*				FleshImpactParticle;
-
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Projectile FX")
-	UParticleSystem*				ImpactParticle;
-
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Projectile FX")
-	USoundCue*						ImpactSound;
-
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Projecitle Gameplay")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Projectile Gameplay")
 	float						Damage;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Projecitle Gameplay")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Projectile Gameplay")
 	float						ImpactForceScale;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Projecitle Gameplay")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Projectile Gameplay")
 	TSubclassOf<UDamageType>	DamageType;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Projectile Gameplay")
+	TSubclassOf<AImpactEffect>	ImpactEffect;
 };
