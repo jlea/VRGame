@@ -38,6 +38,74 @@ void AExtendedCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 }
 
+void AExtendedCharacter::UpdateCharacterBodyTwist(float DeltaSeconds)
+{
+	if (bDead || GetMesh()->IsSimulatingPhysics())
+	{
+		return;
+	}
+
+	/* Update the controller pitch and yaw for clients who aren't this.*/
+	if (IsLocallyControlled() || Role == ROLE_Authority)
+	{
+		CurrentControllerYaw = GetControlRotation().Yaw;
+		CurrentControllerPitch = GetControlRotation().Pitch;
+	}
+
+	FRotator AimRotation;
+	AimRotation.Pitch = CurrentControllerPitch;
+	AimRotation.Yaw = CurrentControllerYaw;
+
+	FRotator RotationOffset = FRotator(0, -90, 0);
+
+	bool bShouldTwist = true;
+	if (bShouldTwist)
+	{
+		float YawThreshold = 90;
+		AActor* RelativeActor = this;
+
+		//Add the mesh relative rotation
+		FRotator MeshRotation = GetMesh()->GetComponentRotation() - RotationOffset;
+
+		AimPitchDelta = (MeshRotation - AimRotation).GetNormalized().Pitch;
+		AimPitchDelta = FMath::Clamp<float>(AimPitchDelta, -90, 90);
+		AimYawDelta = (MeshRotation - AimRotation).GetNormalized().Yaw;//
+		AimYawDelta = FMath::Clamp<float>(AimYawDelta, -90, 90);
+
+		//Calculate if we need to twist
+		if ((AimYawDelta >= YawThreshold || AimYawDelta <= -YawThreshold))
+		{
+			FRotator NewMeshRotation;
+			NewMeshRotation.Pitch = 0;
+			NewMeshRotation.Roll = 0;
+			NewMeshRotation.Yaw = CurrentControllerYaw + RotationOffset.Yaw;
+
+			StoredMeshRotation = NewMeshRotation;
+		}
+	}
+
+	//Set if we need to rotate the mesh
+	if (!IsLockedToAnimation())
+	{
+		float InterpSpeed = 6.0f;
+
+		//If we're moving, just rotate the mesh to our actor direction
+		if (GetVelocity().Size() > 0.5f)
+		{
+			StoredMeshRotation = GetActorRotation() + RotationOffset;
+			InterpSpeed = 24.0f;
+		}
+
+		//Rotate the character as needed
+		FRotator InterpRotation = FMath::RInterpTo(GetMesh()->GetComponentRotation(), StoredMeshRotation, DeltaSeconds, InterpSpeed);
+		GetMesh()->SetWorldRotation(InterpRotation);
+	}
+	else
+	{
+		GetMesh()->SetWorldRotation(GetActorRotation() + RotationOffset);
+	}
+}
+
 bool AExtendedCharacter::ShouldTakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) const
 {
 	if (bDead)

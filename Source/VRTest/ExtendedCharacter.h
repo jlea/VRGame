@@ -43,6 +43,31 @@ public:
 	void OnKilled();
 	
 	//////////////////////////////////////////////////////////////////////////
+	//	Animation
+
+	bool IsLockedToAnimation() { return false; }
+
+	virtual void UpdateCharacterBodyTwist(float DeltaSeconds);
+
+	/* Our stored actor rotation (its not modified until we reach a twist threshold)*/
+	UPROPERTY()
+	FRotator StoredMeshRotation;
+
+	/** Difference between our actor rotation and our aiming rotation */
+	UPROPERTY(BlueprintReadOnly, Category = Animation)
+	float AimYawDelta;
+
+	/** Difference between our actor rotation and our aiming rotation */
+	UPROPERTY(BlueprintReadOnly, Category = Animation)
+	float AimPitchDelta;
+
+	/* )*/
+	float CurrentControllerYaw;
+
+	/* */
+	float CurrentControllerPitch;
+
+	//////////////////////////////////////////////////////////////////////////
 	//	Variables
 
 	UPROPERTY(EditAnywhere, Category = "Character")
