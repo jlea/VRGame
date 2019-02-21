@@ -4,6 +4,9 @@
 #include "Sound/SoundCue.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/AudioComponent.h"
+#include "DamageTypes/DamageType_Extended.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -125,30 +128,159 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 		CurrentHealth -= BaseDamage;
 		if (CurrentHealth <= 0.0f)
 		{
-			Kill();
+			Kill(EventInstigator, DamageCauser, DamageEvent);
 		}
 	}
 
 	return BaseDamage;
 }
 
-void AExtendedCharacter::Kill()
+void AExtendedCharacter::PlayDeathAnimation()
+{
+	int32 RandomAnimation = DeathAnimations.Num() - 1;
+	if (DeathAnimations.IsValidIndex(RandomAnimation))
+	{
+		float AnimDuration = PlayAnimMontage(DeathAnimations[RandomAnimation]);
+
+		//Schedule the ragdoll
+		FTimerHandle Timer;
+		GetWorld()->GetTimerManager().SetTimer(Timer, this, &AExtendedCharacter::Ragdoll, FMath::Max(0.1f, AnimDuration - 0.2f), false);
+	}
+	else
+	{
+		//Just ragdoll
+		Ragdoll();
+	}
+}
+
+bool AExtendedCharacter::ShouldRagdollOnDeath(FHitResult Hit)
+{
+	return DeathAnimations.Num() == 0;
+}
+
+void AExtendedCharacter::Kill(AController* Killer, AActor *DamageCauser, struct FDamageEvent const& DamageEvent)
 {
 	check(!bDead);
+
+	UDamageType_Extended*	DamageType = nullptr;
+	if (DamageEvent.DamageTypeClass)
+	{
+		DamageType = Cast<UDamageType_Extended>(DamageEvent.DamageTypeClass.GetDefaultObject());
+	}
 
 	GetController()->UnPossess();
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCapsuleComponent()->Deactivate();
 
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->SetComponentTickEnabled(false);
+
+	FHitResult HitResult;
+	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
+	{
+		const FPointDamageEvent* PointDamageEvent = (const FPointDamageEvent*)&DamageEvent;
+		if (PointDamageEvent)
+		{
+			HitResult = PointDamageEvent->HitInfo;
+
+			if (DamageType && DamageType->bSeverLimbs)
+			{
+				SeverLimb(HitResult);
+			}
+		}
+	}
+
+	PlayDialogueSound(DeathSound);
+
+	if (ShouldRagdollOnDeath(HitResult))
+	{
+		Ragdoll();
+	}
+	else
+	{
+		PlayDeathAnimation();
+	}
+
+	OnKilled(Killer, DamageCauser, DamageEvent);
+	OnKilledDelegate.Broadcast(this, Killer);
+
+	bDead = true;
+}
+
+void AExtendedCharacter::Ragdoll()
+{
 	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
 	GetMesh()->SetSimulatePhysics(true);
 
-	UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation(), GetActorRotation());
+}
 
-	OnKilled();
-	OnKilledDelegate.Broadcast(this);
+void AExtendedCharacter::PlayDialogueSound(USoundCue* Sound)
+{
+	if (!Sound)
+	{
+		return;
+	}
 
-	bDead = true;
+	//Stop our screams
+	if (CurrentDialogue && CurrentDialogue->IsPlaying())
+	{
+		CurrentDialogue->Stop();
+	}
+
+	CurrentDialogue = UGameplayStatics::SpawnSoundAttached(Sound, GetMesh());
+
+	//Sound event
+	MakeNoise(1.0f, this, GetActorLocation(), 2500.0f);
+}
+
+void AExtendedCharacter::Bleed(FName Bone)
+{
+	if (!GetMesh() || GetMesh()->GetBoneIndex(Bone) == INDEX_NONE)
+	{
+		return;
+	}
+
+	if (!BleedEffect)
+	{
+		return;
+	}
+
+	UGameplayStatics::SpawnEmitterAttached(BleedEffect, GetMesh(), Bone);
+}
+
+void AExtendedCharacter::SeverLimb(FHitResult Hit)
+{
+	//Already severed this limb
+	if (SeveredLimbs.Contains(Hit.BoneName))
+	{
+		return;
+	}
+
+	//Find the bone name above the one we just hit
+	int32 HitBoneIndex = GetMesh()->GetBoneIndex(Hit.BoneName);
+	if (HitBoneIndex == INDEX_NONE)
+	{
+		return;
+	}
+
+	FName ParentBoneName = GetMesh()->GetParentBone(Hit.BoneName);
+	if (ParentBoneName != NAME_None)
+	{
+		//Spawn some blood at the parent bone
+		Bleed(ParentBoneName);
+	}
+
+	static FName CollisionProfileName(TEXT("Ragdoll"));
+	GetMesh()->SetCollisionProfileName(CollisionProfileName);
+	GetMesh()->BreakConstraint(Hit.ImpactNormal, Hit.ImpactPoint, Hit.BoneName);
+	SeveredLimbs.AddUnique(Hit.BoneName);
+
+	//Add some blood to our limb
+	Bleed(Hit.BoneName);
+
+	//
+	OnSeverLimb(Hit);
 }
 

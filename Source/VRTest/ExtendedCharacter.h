@@ -7,8 +7,9 @@
 #include "ExtendedCharacter.generated.h"
 
 class USoundCue;
+class AWeapon;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCharacterKilledDelegate, AExtendedCharacter*, Character);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FCharacterKilledDelegate, AExtendedCharacter*, Character, AController*, Killer);
 
 UCLASS()
 class VRTEST_API AExtendedCharacter : public ACharacter
@@ -31,16 +32,66 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	//////////////////////////////////////////////////////////////////////////
-	//	Functions
+	//	Damage (Gameplay)
 
 	virtual bool ShouldTakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) const override;
 	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
+	virtual void PlayDeathAnimation();
+	virtual bool ShouldRagdollOnDeath(FHitResult Hit);
+
 	UFUNCTION(BlueprintCallable, Category = "Character")
-	void Kill();
+	void Kill(AController* Killer, AActor *DamageCauser, struct FDamageEvent const& DamageEvent);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Character")
-	void OnKilled();
+	void OnKilled(AController* Killer, AActor *DamageCauser, struct FDamageEvent const& DamageEvent);
+
+	UFUNCTION()
+	void Ragdoll();
+
+	UPROPERTY()
+	FTimerHandle TimerHandle_Ragdoll;
+
+	//////////////////////////////////////////////////////////////////////////
+	//	Damage (FX)
+
+
+	/* Sounds played when we die */
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = Sounds)
+	USoundCue* DeathSound;
+
+	/* Sounds played when we die */
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = Sounds)
+	USoundCue* PainSound;
+
+	UPROPERTY()
+	UAudioComponent* CurrentDialogue;
+
+	UFUNCTION(BlueprintCallable, Category = Sounds)
+	virtual void PlayDialogueSound(USoundCue* Sound);
+
+	UFUNCTION(BlueprintCallable, Category = Damage)
+	virtual void Bleed(FName Bone);
+
+	UFUNCTION(BlueprintCallable, Category = Damage)
+	virtual void SeverLimb(FHitResult Hit);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = Damage)
+	void OnSeverLimb(FHitResult Hit);
+
+	/** Effect to spawn when we kill something */
+	UPROPERTY(EditAnywhere, Category = Damage)
+	UParticleSystem* BleedEffect;
+
+	UPROPERTY(BlueprintReadOnly, Category = Damage)
+	TArray<FName> SeveredLimbs;
+
+
+	//////////////////////////////////////////////////////////////////////////
+	//	Weapons
+
+	//UPROPERTY()
+	//AWeapon*	EquippedWeapon;
 	
 	//////////////////////////////////////////////////////////////////////////
 	//	Animation
@@ -67,14 +118,11 @@ public:
 	/* */
 	float CurrentControllerPitch;
 
+	UPROPERTY(EditAnywhere, Category = "Animation")
+	TArray<UAnimMontage*>	DeathAnimations;
+
 	//////////////////////////////////////////////////////////////////////////
 	//	Variables
-
-	UPROPERTY(EditAnywhere, Category = "Character")
-	USoundCue*	PainSound;
-
-	UPROPERTY(EditAnywhere, Category = "Character")
-	USoundCue*	DeathSound;
 
 	UPROPERTY(EditAnywhere, Category = "Character")
 	int32 MaxHealth;
