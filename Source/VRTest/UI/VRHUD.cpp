@@ -26,7 +26,7 @@ void AVRHUD::DrawHUD()
 		auto HeldFirearm = Cast<AFirearm>(Hand->GetInteractingActor());
 		if (HeldFirearm)
 		{
-			auto HeldMagazine = HeldFirearm->LoadedMagazine;
+			auto HeldMagazine = HeldFirearm->GetLoadedMagazine();
 			if (HeldMagazine)
 			{
 				FString MagazineAmmoText = FString::Printf(TEXT("%d / %d"), HeldMagazine->CurrentAmmo, HeldMagazine->AmmoCount);

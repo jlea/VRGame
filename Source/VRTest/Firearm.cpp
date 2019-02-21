@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "Magazine.h"
+#include "PlayerPawn.h"
 #include "ExtendedCharacter.h"
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemComponent.h"
@@ -29,9 +30,11 @@ AFirearm::AFirearm()
 	MagazineCollisionBox->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
 	MagazineCollisionBox->SetupAttachment(FirearmMesh);
 
-	//MagazinePreviewMesh = CreateDefaultSubobject<USkeletalMeshComponent>("MagazinePreviewMesh");
-	//MagazinePreviewMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	
+	MagazinePreviewMesh = CreateDefaultSubobject<UStaticMeshComponent>("MagazinePreviewMesh");
+	MagazinePreviewMesh->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+	MagazinePreviewMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	MagazinePreviewMesh->SetupAttachment(MagazineCollisionBox);
+
 	BulletsPerShot = 1;
 	FireRate = 600.0f;
 	Spread = 0.0f;
@@ -41,6 +44,7 @@ AFirearm::AFirearm()
 	bHasInternalMagazine = false;
 
 	LoadedMagazine = nullptr;
+	AmmoPreviewStatus = EAmmoPreviewStatus::None;
 
 	bTriggerDown = false;
 	HandAttachSocket = TEXT("WeaponMountSocket");
@@ -48,7 +52,7 @@ AFirearm::AFirearm()
 	CharacterAttachSocket = TEXT("WeaponSocket");
 	ShellAttachSocket = TEXT("ShellEjectSocket");
 
-	CartridgeEjectVelocity = 2000.0f;
+	CartridgeEjectVelocity = 400.0f;
 
 	PickupBones.Add(TEXT("b_gun_Root"));
 	PickupBones.Add(TEXT("b_gun_trigger"));
@@ -83,6 +87,8 @@ void AFirearm::BeginPlay()
 	{
 		EjectLoadedMagazine();
 	}
+
+	SetAmmoPreviewStatus(EAmmoPreviewStatus::None);
 }
 
 // Called every frame
@@ -90,6 +96,64 @@ void AFirearm::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	auto OldPreviewStatus = AmmoPreviewStatus;
+	EAmmoPreviewStatus NewAmmoPreviewStatus = EAmmoPreviewStatus::None;
+
+	if (AttachedHand)
+	{
+		APlayerPawn* Player = AttachedHand->GetPlayerPawn();
+		if (Player)
+		{
+			TArray<AInteractableActor*>	HeldActors;
+
+			HeldActors.Add(Player->LeftHand->GetInteractingActor());
+			HeldActors.Add(Player->RightHand->GetInteractingActor());
+
+			for (auto HeldActor : HeldActors)
+			{
+				if (!HeldActor)
+				{
+					continue;
+				}
+
+				auto HeldCartridge = Cast<ACartridge>(HeldActor);
+				if (HeldCartridge)
+				{
+					auto LoadedMagazine = GetLoadedMagazine();;
+					if (LoadedMagazine && HeldCartridge->CanLoadIntoMagazine(LoadedMagazine))
+					{
+						NewAmmoPreviewStatus = EAmmoPreviewStatus::OutOfRange;
+
+						if (LoadedMagazine->IsReadyToLoadCartridge(HeldCartridge))
+						{
+							NewAmmoPreviewStatus = EAmmoPreviewStatus::WithinRange;
+						}
+					}
+				}
+
+				auto HeldMagazine = Cast<AMagazine>(HeldActor);
+				if (HeldMagazine)
+				{
+					if (IsCompatibleMagazine(HeldMagazine))
+					{
+						// See if we are ready to load it
+						NewAmmoPreviewStatus = EAmmoPreviewStatus::OutOfRange;
+
+						if (IsReadyToLoadMagazine(HeldMagazine))
+						{
+							NewAmmoPreviewStatus = EAmmoPreviewStatus::WithinRange;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if (NewAmmoPreviewStatus != OldPreviewStatus)
+	{
+		SetAmmoPreviewStatus(NewAmmoPreviewStatus);
+	}
+	
 	if (bTriggerDown)
 	{
 		if (AmmoLoadType == EFirearmAmmoLoadType::Automatic)
@@ -121,6 +185,22 @@ void AFirearm::Tick(float DeltaTime)
 	}
 }
 
+void AFirearm::SetAmmoPreviewStatus(EAmmoPreviewStatus NewPreviewStatus)
+{
+	AmmoPreviewStatus = NewPreviewStatus;
+
+	if (AmmoPreviewStatus == EAmmoPreviewStatus::None)
+	{
+		MagazinePreviewMesh->SetVisibility(false, true);
+	}
+	else
+	{
+		MagazinePreviewMesh->SetVisibility(true, true);
+	}
+
+	OnNearbyHeldAmmoChanged(AmmoPreviewStatus);
+}
+
 bool AFirearm::CanGrab(const AHand* Hand)
 {
 	check(HandleBone.IsValid());
@@ -139,7 +219,7 @@ void AFirearm::OnBeginInteraction(AHand* Hand)
 
 	if (Hand == AttachedHand)
 	{
-		if (ChamberedRoundStatus == EChamberedRoundStatus::NoRound)
+		if (ChamberedRoundStatus == EChamberedRoundStatus::NoRound || ChamberedRoundStatus == EChamberedRoundStatus::Spent)
 		{
 			UGameplayStatics::PlaySoundAtLocation(this, DryFireSound, FirearmMesh->GetSocketLocation(MuzzleBone));
 			OnDryFire();
@@ -330,15 +410,15 @@ void AFirearm::EjectRound()
 
 			auto Shell = GetWorld()->SpawnActor<ACartridge>(CartridgeClass, SpawnTransform, SpawnParams);
 
-			Shell->GetMesh()->AddImpulse(-Shell->GetActorForwardVector() * CartridgeEjectVelocity, NAME_None, true);
 			Shell->OnEjected(ChamberedRoundStatus == EChamberedRoundStatus::Spent);
+			Shell->GetMesh()->AddImpulse(Shell->GetActorForwardVector() * CartridgeEjectVelocity, NAME_None, true);
 		}
 	}
 
 	ChamberedRoundStatus = EChamberedRoundStatus::NoRound;
 }
 
-bool AFirearm::CanLoadMagazine(AMagazine* Magazine)
+bool AFirearm::IsCompatibleMagazine(AMagazine* Magazine)
 {
 	if(!Magazine)
 	{
@@ -356,6 +436,19 @@ bool AFirearm::CanLoadMagazine(AMagazine* Magazine)
 	}
 
 	return true;
+}
+
+bool AFirearm::IsReadyToLoadMagazine(AMagazine* Magazine)
+{
+	TSet<UPrimitiveComponent*>	OverlappingComponents;
+	Magazine->GetOverlappingComponents(OverlappingComponents);
+
+	if (OverlappingComponents.Contains(MagazineCollisionBox))
+	{
+		return true;
+	}
+
+	return false;
 }
 
 void AFirearm::LoadMagazine(AMagazine* NewMagazine)

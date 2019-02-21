@@ -74,7 +74,7 @@ void ACartridge::Tick(float DeltaTime)
 					continue;
 				}
 
-				auto PotentialMagazine = Firearm->LoadedMagazine;
+				auto PotentialMagazine = Firearm->GetLoadedMagazine();
 				if (!PotentialMagazine)
 				{
 					continue;
@@ -85,23 +85,10 @@ void ACartridge::Tick(float DeltaTime)
 					continue;
 				}
 
-				TSet<UPrimitiveComponent*>	OverlappingComponents;
-				GetOverlappingComponents(OverlappingComponents);
-
-				if (OverlappingComponents.Contains(Firearm->MagazineCollisionBox))
+				if (PotentialMagazine->IsReadyToLoadCartridge(this))
 				{
 					LoadableMagazine = PotentialMagazine;
-
-					FlushPersistentDebugLines(GetWorld());
-
-					DrawDebugBox(GetWorld(), Firearm->MagazineCollisionBox->GetComponentLocation(), Firearm->MagazineCollisionBox->GetScaledBoxExtent(), Firearm->MagazineCollisionBox->GetComponentRotation().Quaternion(),
-						FColor::Green, false, 0.1f, SDPG_World, 1.0f);
 					break;
-				}
-				else
-				{
-					DrawDebugBox(GetWorld(), Firearm->MagazineCollisionBox->GetComponentLocation(), Firearm->MagazineCollisionBox->GetScaledBoxExtent(), Firearm->MagazineCollisionBox->GetComponentRotation().Quaternion(),
-						FColor::Red, false, 0.1f, SDPG_World, 1.0f);
 				}
 			}
 		}
@@ -110,12 +97,17 @@ void ACartridge::Tick(float DeltaTime)
 
 bool ACartridge::CanLoadIntoMagazine(AMagazine* Magazine)
 {
-	if (Magazine->CurrentAmmo < Magazine->AmmoCount)
+	if (Magazine->CurrentAmmo == Magazine->AmmoCount)
 	{
-		return true;
+		return false;
 	}
 
-	return false;
+	if (!CompatibleMagazines.Contains(Magazine->GetClass()))
+	{
+		return false;
+	}
+
+	return true;
 }
 
 void ACartridge::LoadIntoMagazine(AMagazine* Magazine)

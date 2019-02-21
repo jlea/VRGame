@@ -54,6 +54,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Cartridge")
 	USoundCue* LoadSound;
 
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Cartridge")
+	TArray<TSubclassOf<AMagazine>>	CompatibleMagazines;
+
 private:
 	UPROPERTY()
 	AMagazine*	LoadableMagazine;

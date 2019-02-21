@@ -86,4 +86,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "VR")
 	FInteractableActorEvent OnPickedUpDelegate;
+
+
+	//////////////////////////////////////////////////////////////////////////
+	//	Special
+
 };

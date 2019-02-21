@@ -35,6 +35,14 @@ enum class EFirearmAmmoLoadType : uint8
 	PumpAction
 };
 
+UENUM(BlueprintType)
+enum class EAmmoPreviewStatus : uint8
+{
+	None,
+	OutOfRange,
+	WithinRange
+};
+
 UCLASS()
 class VRTEST_API AFirearm : public AInteractableActor
 {
@@ -62,7 +70,14 @@ public:
 	virtual void OnBeginPickup(AHand* Hand) override;
 	virtual void OnDrop(AHand* Hand) override;
 
-	bool CanLoadMagazine(AMagazine* Magazine);
+	UFUNCTION(BlueprintPure, Category = "Weapon")
+	AMagazine*	GetLoadedMagazine() { return LoadedMagazine; }
+	
+	UFUNCTION(BlueprintPure, Category = "Weapon")
+	bool IsCompatibleMagazine(AMagazine* Magazine);
+
+	UFUNCTION(BlueprintPure, Category = "Weapon")
+	bool IsReadyToLoadMagazine(AMagazine* Magazine);
 
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void LoadMagazine(AMagazine* NewMagazine);
@@ -107,7 +122,7 @@ public:
 	USkeletalMeshComponent* FirearmMesh;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Mesh")
-	USkeletalMeshComponent* MagazinePreviewMesh;
+	UStaticMeshComponent* MagazinePreviewMesh;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	UBoxComponent*	MagazineCollisionBox;
@@ -184,19 +199,18 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Ammo")
 	bool bHasInternalMagazine;
 
-	UPROPERTY()
-	AMagazine*	LoadedMagazine;
-
-	UPROPERTY()
-	AExtendedCharacter*	AttachedCharacter;
-
-	bool bHasFired;
-	bool bTriggerDown;
-	float LastFireTime;
-
-	bool bEjectRoundOnFire;
-
 	EChamberedRoundStatus ChamberedRoundStatus;
+
+	//////////////////////////////////////////////////////////////////////////
+	//	 UI
+
+	UPROPERTY(BlueprintReadOnly, Category = "Weapon")
+	EAmmoPreviewStatus AmmoPreviewStatus;
+
+	void SetAmmoPreviewStatus(EAmmoPreviewStatus NewPreviewStatus);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Weapon")
+	void OnNearbyHeldAmmoChanged(EAmmoPreviewStatus NewPreviewStatus);
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Delegates
@@ -212,4 +226,17 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Weapon")
 	FFirearmEvent OnFirearmDropped;
+
+protected:
+	UPROPERTY()
+	AExtendedCharacter*	AttachedCharacter;
+
+	UPROPERTY()
+	AMagazine*	LoadedMagazine;
+
+	bool bHasFired;
+	bool bTriggerDown;
+	float LastFireTime;
+
+	bool bEjectRoundOnFire;
 };

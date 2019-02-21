@@ -30,6 +30,9 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION(BlueprintPure, Category = "Magazine")
+	bool IsReadyToLoadCartridge(ACartridge* Cartridge);
+
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Magazine")
 	UStaticMeshComponent* MagazineMesh;
 

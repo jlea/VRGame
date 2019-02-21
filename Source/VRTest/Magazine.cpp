@@ -2,6 +2,7 @@
 
 #include "Magazine.h"
 #include "Firearm.h"
+#include "Weapons/Cartridge.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
 #include "DrawDebugHelpers.h"
@@ -111,20 +112,14 @@ void AMagazine::Tick(float DeltaTime)
 				auto Firearm = Cast<AFirearm>(ClosestActor);
 				if (Firearm)
 				{
-					if (!Firearm->CanLoadMagazine(this))
+					if (!Firearm->IsCompatibleMagazine(this))
 					{
 						continue;
 					}
 
-					TSet<UPrimitiveComponent*>	OverlappingComponents;
-					GetOverlappingComponents(OverlappingComponents);
-
-					if(OverlappingComponents.Contains(Firearm->MagazineCollisionBox))
+					if (Firearm->IsReadyToLoadMagazine(this))
 					{
-						LoadableFirearm = Firearm; 
-
-						DrawDebugSphere(GetWorld(), Firearm->MagazineCollisionBox->GetComponentLocation(), 5.0f, 16, FColor::Green, false, 0.1f, SDPG_World, 0.25f);
-						//DrawDebugLine(GetWorld(), AttachedHand->GetHandSelectionOrigin(), Firearm->FirearmMesh->GetBoneLocation(ClosestBone), FColor::Green, false, 0.1f, SDPG_World, 0.35f);
+						LoadableFirearm = Firearm;
 						break;
 					}
 				}
@@ -133,3 +128,25 @@ void AMagazine::Tick(float DeltaTime)
 	}
 }
 
+bool AMagazine::IsReadyToLoadCartridge(ACartridge* Cartridge)
+{
+	TSet<UPrimitiveComponent*>	OverlappingComponents;
+	Cartridge->GetOverlappingComponents(OverlappingComponents);
+
+	if (AttachedFirearm)
+	{
+		if (OverlappingComponents.Contains(AttachedFirearm->MagazineCollisionBox))
+		{
+			return true;
+		}
+	}
+	else
+	{
+		if (OverlappingComponents.Contains(MagazineMesh))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
