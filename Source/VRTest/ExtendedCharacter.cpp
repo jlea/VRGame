@@ -32,6 +32,7 @@ void AExtendedCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	UpdateCharacterBodyTwist(DeltaTime);
 }
 
 // Called to bind functionality to input
