@@ -23,6 +23,9 @@ AMagazine::AMagazine()
 	HandAttachSocket = TEXT("MagazineMountSocket");
 
 	bDropOnRelease = true;
+	bInteractable = true;
+
+	InteractPriority = EInteractPriority::Low;
 }
 
 void AMagazine::BeginPlay()
@@ -34,9 +37,21 @@ void AMagazine::BeginPlay()
 
 bool AMagazine::CanGrab(const AHand* Hand)
 {
+	if (!bInteractable)
+	{
+		return false;
+	}
+
 	if (AttachedFirearm)
 	{
+		// Don't allow magazine pickup if we're in a gun on the ground
 		if (!AttachedFirearm->GetAttachedHand())
+		{
+			return false;
+		}
+
+		// Don't allow pickup if we are in an empty weapon with some ammo, prefer to use the slide instead.
+		if(AttachedFirearm->ChamberedRoundStatus == EChamberedRoundStatus::NoRound && CurrentAmmo > 0)
 		{
 			return false;
 		}
@@ -80,6 +95,10 @@ void AMagazine::OnMagazineLoaded(AFirearm* Firearm)
 	GEngine->AddOnScreenDebugMessage(1, 2.0f, FColor::Green, FString::Printf(TEXT("%s: Loading magazine"), *GetName()), true, FVector2D(3.0f, 3.0f));
 
 	AttachedFirearm = Firearm;
+
+	// Increase priority when loaded
+	InteractPriority = EInteractPriority::Medium;
+
 }
 
 void AMagazine::OnMagazineEjected(AFirearm* Firearm)
@@ -93,6 +112,8 @@ void AMagazine::OnMagazineEjected(AFirearm* Firearm)
 	MagazineMesh->SetSimulatePhysics(true);
 
 	AttachedFirearm = nullptr;
+
+	InteractPriority = EInteractPriority::Low;
 }
 
 // Called every frame
@@ -126,6 +147,11 @@ void AMagazine::Tick(float DeltaTime)
 			}
 		}
 	}
+}
+
+void AMagazine::ReplenishMagazine()
+{
+	CurrentAmmo = AmmoCount;
 }
 
 bool AMagazine::IsReadyToLoadCartridge(ACartridge* Cartridge)

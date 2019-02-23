@@ -14,6 +14,8 @@ AInteractableActor::AInteractableActor()
 	InteractingHand = nullptr;
 	AttachedHand = nullptr;
 
+	InteractPriority = EInteractPriority::Low;
+
 	bDropOnRelease = true;
 }
 

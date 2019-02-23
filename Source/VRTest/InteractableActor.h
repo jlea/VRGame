@@ -9,6 +9,14 @@
 class AHand;
 class AHUD;
 
+UENUM(BlueprintType)
+enum class EInteractPriority : uint8
+{
+	Low,
+	Medium,
+	High
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractableActorEvent, AInteractableActor*, InteractableActor);
 
 UCLASS()
@@ -71,6 +79,8 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Gameplay")
 	bool bDropOnRelease;
 
+	UPROPERTY(EditAnywhere, Category = "Gameplay")
+	EInteractPriority	InteractPriority;
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Delegates

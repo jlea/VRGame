@@ -153,6 +153,7 @@ void AHand::UpdateNearbyActors()
 	const float SearchDistance = SphereCollision->GetScaledSphereRadius();
 	const FVector HandLocation = GetHandSelectionOrigin();
 
+	EInteractPriority BestPriority = EInteractPriority::Low;
 	float ClosestActorDistance = FLT_MAX;
 	AInteractableActor* ClosestActor = nullptr;
 	
@@ -173,13 +174,30 @@ void AHand::UpdateNearbyActors()
 			continue;
 		}
 
+
 		NearbyActors.Add(Actor);
 
-		const float DistanceToActor = FVector::Dist(Actor->GetActorLocation(), HandLocation);
-		if (DistanceToActor < ClosestActorDistance)
+		if (Actor->InteractPriority < BestPriority)
 		{
+			continue;
+		}
+
+		// Higher priority, use this
+		const float DistanceToActor = FVector::Dist(Actor->GetActorLocation(), HandLocation);
+		if (Actor->InteractPriority > BestPriority)
+		{
+			BestPriority = Actor->InteractPriority;
+
 			ClosestActor = Actor;
 			ClosestActorDistance = ClosestActorDistance;
+		}
+		else
+		{
+			if (DistanceToActor < ClosestActorDistance)
+			{
+				ClosestActor = Actor;
+				ClosestActorDistance = ClosestActorDistance;
+			}
 		}
 	}
 

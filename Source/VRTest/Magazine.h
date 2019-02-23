@@ -30,6 +30,9 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION(BlueprintCallable, Category = "Magazine")
+	void ReplenishMagazine();
+
 	UFUNCTION(BlueprintPure, Category = "Magazine")
 	bool IsReadyToLoadCartridge(ACartridge* Cartridge);
 
@@ -59,4 +62,6 @@ public:
 
 	UPROPERTY()
 	AFirearm*	LoadableFirearm;
+
+	bool bInteractable;
 };
