@@ -7,6 +7,7 @@
 #include "Components/AudioComponent.h"
 #include "DamageTypes/DamageType_Extended.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Firearm.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -14,6 +15,8 @@ AExtendedCharacter::AExtendedCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	bPlayingDamageAnimation = false;
 
 	MaxHealth = 100;
 	bDead = false;
@@ -39,7 +42,11 @@ void AExtendedCharacter::Tick(float DeltaTime)
 void AExtendedCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
 
+void AExtendedCharacter::FinishDamageAnimation()
+{
+	bPlayingDamageAnimation = false;
 }
 
 void AExtendedCharacter::UpdateCharacterBodyTwist(float DeltaSeconds)
@@ -131,6 +138,26 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 		{
 			Kill(EventInstigator, DamageCauser, DamageEvent);
 		}
+		else
+		{
+			if (!bPlayingDamageAnimation)
+			{
+				if (EquippedFirearm)
+				{
+					auto FirearmDamageAnimations = EquippedFirearm->DamageAnimations;
+
+					int32 RandomAnimation = FMath::RandRange(0, FirearmDamageAnimations.Num() - 1);
+					if (FirearmDamageAnimations.IsValidIndex(RandomAnimation))
+					{
+						float AnimDuration = PlayAnimMontage(FirearmDamageAnimations[RandomAnimation].Animation);
+						bPlayingDamageAnimation = true;
+
+						//Schedule the ragdoll
+						GetWorld()->GetTimerManager().SetTimer(TimerHandle_DamageAnimation, this, &AExtendedCharacter::FinishDamageAnimation, AnimDuration, false);
+					}
+				}
+			}
+		}
 	}
 
 	return BaseDamage;
@@ -138,10 +165,16 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 
 void AExtendedCharacter::PlayDeathAnimation()
 {
-	int32 RandomAnimation = DeathAnimations.Num() - 1;
-	if (DeathAnimations.IsValidIndex(RandomAnimation))
+	auto DeathAnimationsToPlay = DeathAnimations;
+	if (EquippedFirearm)
 	{
-		float AnimDuration = PlayAnimMontage(DeathAnimations[RandomAnimation]);
+		DeathAnimationsToPlay.Append(EquippedFirearm->DeathAnimations);
+	}
+
+	int32 RandomAnimation = FMath::RandRange(0,DeathAnimationsToPlay.Num() - 1);
+	if (DeathAnimationsToPlay.IsValidIndex(RandomAnimation))
+	{
+		float AnimDuration = PlayAnimMontage(DeathAnimationsToPlay[RandomAnimation]);
 
 		//Schedule the ragdoll
 		FTimerHandle Timer;
@@ -156,7 +189,13 @@ void AExtendedCharacter::PlayDeathAnimation()
 
 bool AExtendedCharacter::ShouldRagdollOnDeath(FHitResult Hit)
 {
-	return DeathAnimations.Num() == 0;
+	auto DeathAnimationsToTest = DeathAnimations;
+	if (EquippedFirearm)
+	{
+		DeathAnimationsToTest.Append(EquippedFirearm->DeathAnimations);
+	}
+
+	return DeathAnimationsToTest.Num() == 0;
 }
 
 void AExtendedCharacter::Kill(AController* Killer, AActor *DamageCauser, struct FDamageEvent const& DamageEvent)
@@ -207,7 +246,14 @@ void AExtendedCharacter::Kill(AController* Killer, AActor *DamageCauser, struct 
 	OnKilled(Killer, DamageCauser, DamageEvent);
 	OnKilledDelegate.Broadcast(this, Killer);
 
+	if (EquippedFirearm)
+	{
+		EquippedFirearm->DetachFromCharacter();
+	}
+
 	bDead = true;
+
+	SetActorTickEnabled(false);
 }
 
 void AExtendedCharacter::Ragdoll()

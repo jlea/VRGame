@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "GenericTeamAgentInterface.h"
 #include "ExtendedCharacter.generated.h"
 
+class AFirearm;
 class USoundCue;
 class AWeapon;
 
@@ -52,6 +54,9 @@ public:
 	UPROPERTY()
 	FTimerHandle TimerHandle_Ragdoll;
 
+	UPROPERTY()
+	FTimerHandle TimerHandle_DamageAnimation;
+
 	//////////////////////////////////////////////////////////////////////////
 	//	Damage (FX)
 
@@ -90,13 +95,18 @@ public:
 	//////////////////////////////////////////////////////////////////////////
 	//	Weapons
 
-	//UPROPERTY()
-	//AWeapon*	EquippedWeapon;
+	UPROPERTY(BlueprintReadOnly)
+	AFirearm*	EquippedFirearm;
 	
 	//////////////////////////////////////////////////////////////////////////
 	//	Animation
 
-	bool IsLockedToAnimation() { return false; }
+	UFUNCTION()
+	void FinishDamageAnimation();
+
+	bool bPlayingDamageAnimation;
+
+	bool IsLockedToAnimation() { return bPlayingDamageAnimation; }
 
 	virtual void UpdateCharacterBodyTwist(float DeltaSeconds);
 
@@ -135,4 +145,7 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FCharacterKilledDelegate OnKilledDelegate;
+
+	UPROPERTY(EditAnywhere, Category = "Character")
+	FGenericTeamId TeamId;
 };

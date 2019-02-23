@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GenericTeamAgentInterface.h"
 #include "GameFramework/Pawn.h"
 #include "PlayerPawn.generated.h"
 
@@ -12,7 +13,7 @@ class UCameraComponent;
 class UTextureRenderTarget2D;
 
 UCLASS()
-class VRTEST_API APlayerPawn : public APawn
+class VRTEST_API APlayerPawn : public APawn, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -23,6 +24,10 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	FGenericTeamId TeamId;
+
+	virtual FGenericTeamId GetGenericTeamId() const override { return TeamId; }
 
 public:	
 	// Called every frame

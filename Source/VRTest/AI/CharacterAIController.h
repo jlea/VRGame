@@ -17,8 +17,17 @@ class VRTEST_API ACharacterAIController : public AAIController
 	ACharacterAIController();
 
 public:
+	virtual FGenericTeamId GetGenericTeamId() const override;
+
+	virtual void Tick(float DeltaTime);
 	virtual void UpdateControlRotation(float DeltaTime, bool bUpdatePawn /* = true */) override;
+
+	UFUNCTION(BlueprintCallable)
+	void SetWantsFire(bool bEnabled);
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI Gameplay")
 	float TurnInterpSpeed;
+
+private:
+	bool bShouldFire;
 };

@@ -27,6 +27,8 @@ APlayerPawn::APlayerPawn()
 	CurrentTimeDilation = 1.0f;
 	BulletTimeModifier = 0.35f;
 	BulletTimeInterpSpeed = 12.0f;
+
+	TeamId = FGenericTeamId(0);
 }
 
 // Called when the game starts or when spawned

@@ -1,13 +1,69 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "CharacterAIController.h"
+#include "ExtendedCharacter.h"
+#include "Firearm.h"
 
 ACharacterAIController::ACharacterAIController()
 {
 	TurnInterpSpeed = 5.0f;
 	bAllowStrafe = true;
-
 	bAttachToPawn = true;
+
+	bShouldFire = false;
+	SetGenericTeamId(FGenericTeamId(1));
+}
+
+FGenericTeamId ACharacterAIController::GetGenericTeamId() const
+{
+	auto Me = Cast<AExtendedCharacter>(GetPawn());
+	if (Me)
+	{
+		return Me->TeamId;
+	}
+	
+	return Super::GetGenericTeamId();
+}
+
+void ACharacterAIController::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	
+	if (!GetPawn())
+	{
+		return;
+	}
+
+	FVector DirToTarget = (GetFocalPoint() - GetPawn()->GetActorLocation()).GetSafeNormal2D();
+	const float DotToTarget = FVector::DotProduct(GetControlRotation().Vector(), DirToTarget);
+
+	auto Me = Cast<AExtendedCharacter>(GetPawn());
+	if (Me)
+	{
+		auto Firearm = Me->EquippedFirearm;
+		if (Firearm)
+		{
+			if (Firearm->AmmoLoadType == EFirearmAmmoLoadType::SemiAutomatic)
+			{
+				const bool bCanFire = DotToTarget > 0.9f;
+				if (bShouldFire && bCanFire)
+				{
+					if (Firearm->bTriggerDown)
+					{
+						Firearm->bTriggerDown = false;
+					}
+					else
+					{
+						Firearm->bTriggerDown = true;
+					}
+				}
+				else
+				{
+					Firearm->bTriggerDown = false;
+				}
+			}
+		}
+	}
 }
 
 void ACharacterAIController::UpdateControlRotation(float DeltaTime, bool bUpdatePawn /* = true */)
@@ -48,4 +104,9 @@ void ACharacterAIController::UpdateControlRotation(float DeltaTime, bool bUpdate
 			}
 		}
 	}
+}
+
+void ACharacterAIController::SetWantsFire(bool bEnabled)
+{
+	bShouldFire = bEnabled;
 }
