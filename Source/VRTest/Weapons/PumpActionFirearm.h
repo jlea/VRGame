@@ -22,21 +22,4 @@ public:
 	virtual bool CanFire() override; 
 
 	virtual void Fire();
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "Pump Action")
-	void OnPumpBack();	
-	
-	UFUNCTION(BlueprintImplementableEvent, Category = "Pump Action")
-	void OnPumpForward();
-
-	bool bHasPumped; 
-	
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Pump Action")
-	FName PumpStartSocket;
-
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Pump Action")
-	FName PumpEndSocket;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Pump Action")
-	float PumpProgress;
 };

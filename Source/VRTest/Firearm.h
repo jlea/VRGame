@@ -15,6 +15,7 @@ class AExtendedCharacter;
 class UAnimMontage;
 class ACartridge;
 class UBoxComponent;
+struct FDamageAnimation;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFirearmMagazineEvent, AFirearm*, Firearm, AMagazine*, Magazine);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFirearmEvent, AFirearm*, Firearm);
@@ -43,9 +44,40 @@ enum class EAmmoPreviewStatus : uint8
 	WithinRange
 };
 
+//TODO: Animation struct
+UENUM(BlueprintType)
+enum class EDamageDirection : uint8
+{
+	Left,
+	Right,
+	Front,
+	Back
+};
+
+USTRUCT(BlueprintType)
+struct FDamageAnimation
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(EditAnywhere)
+	UAnimMontage* Animation;
+
+	/* Direction this action is related to */
+	UPROPERTY(EditAnywhere)
+	EDamageDirection DamageDirection;
+
+	FDamageAnimation()
+	{
+		DamageDirection = EDamageDirection::Front;
+		Animation = nullptr;
+	}
+};
+
 UCLASS()
 class VRTEST_API AFirearm : public AInteractableActor
 {
+	friend class ACharacterAIController;
+
 	GENERATED_BODY()
 	
 public:	
@@ -79,6 +111,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Weapon")
 	bool IsReadyToLoadMagazine(AMagazine* Magazine);
 
+	UFUNCTION(BlueprintPure, Category = "Weapon")
+	int32 GetLoadedRounds();
+
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void LoadMagazine(AMagazine* NewMagazine);
 
@@ -92,6 +127,7 @@ public:
 	TArray<FName> PickupBones;
 
 	//////////////////////////////////////////////////////////////////////////
+	//	Firearm
 
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	bool AttachToCharacter(AExtendedCharacter* NewCharacter);
@@ -102,9 +138,11 @@ public:
 	UFUNCTION(BlueprintPure)
 	virtual bool CanFire();
 
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	virtual void Fire();
 
 	/* Loads a free round from our magazine into the chamber */
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void LoadRoundFromMagazine();
 
 	/* Removes the chambered round and spawns the cartridge */
@@ -117,7 +155,15 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnDryFire();
 
-	// Find the closest bone
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Pump Action")
+	FName SlideStartSocket;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Pump Action")
+	FName SlideEndSocket;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Pump Action")
+	float SlideProgress;
+
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Mesh")
 	USkeletalMeshComponent* FirearmMesh;
 
@@ -137,25 +183,10 @@ public:
 	FName ShellAttachSocket;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon")
-	FName HandleBone;
-
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon")
-	FName StockBone;
-
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon")
 	FName MagazineBone;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon")
-	FName BoltBone;
-
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon")
 	FName MuzzleBone;
-
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon")
-	FName TriggerBone;
-
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Animation")
-	UAnimMontage* FireAnimation;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon FX")
 	USoundCue* DryFireSound;
@@ -174,6 +205,15 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon FX")
 	float CartridgeEjectVelocity;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Animation")
+	UAnimMontage* FireAnimation;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Animation")
+	TArray<FDamageAnimation> DamageAnimations;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Animation")
+	TArray<UAnimMontage*> DeathAnimations;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Gameplay")
 	EFirearmAmmoLoadType AmmoLoadType;
@@ -227,6 +267,12 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Weapon")
 	FFirearmEvent OnFirearmDropped;
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Pump Action")
+	void OnSlideBack();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Pump Action")
+	void OnSlideForward();
+
 protected:
 	UPROPERTY()
 	AExtendedCharacter*	AttachedCharacter;
@@ -238,5 +284,6 @@ protected:
 	bool bTriggerDown;
 	float LastFireTime;
 
+	bool bHasSlidBack;
 	bool bEjectRoundOnFire;
 };

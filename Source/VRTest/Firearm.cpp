@@ -18,6 +18,10 @@
 // Sets default values
 AFirearm::AFirearm()
 {
+	bHasSlidBack = false;
+	SlideStartSocket = TEXT("SlideStart");
+	SlideEndSocket = TEXT("SlideEnd");
+
 	bDropOnRelease = false;
 	bEjectRoundOnFire = true;
 
@@ -39,11 +43,12 @@ AFirearm::AFirearm()
 	FireRate = 600.0f;
 	Spread = 0.0f;
 	AmmoLoadType = EFirearmAmmoLoadType::Automatic;
+
 	ChamberedRoundStatus = EChamberedRoundStatus::NoRound;
 	bStartWithMagazine = true;
 	bHasInternalMagazine = false;
-
 	LoadedMagazine = nullptr;
+
 	AmmoPreviewStatus = EAmmoPreviewStatus::None;
 
 	bTriggerDown = false;
@@ -82,6 +87,11 @@ void AFirearm::BeginPlay()
 		auto NewMagazine = GetWorld()->SpawnActor<AMagazine>(DefaultMagazineClass, GetActorTransform(), SpawnParams);
 		LoadMagazine(NewMagazine);
 		LoadRoundFromMagazine();
+
+		if (bHasInternalMagazine)
+		{
+			NewMagazine->bInteractable = false;
+		}
 	}
 	else
 	{
@@ -183,6 +193,46 @@ void AFirearm::Tick(float DeltaTime)
 			bHasFired = false;
 		}
 	}
+
+	if (InteractingHand && InteractingHand != AttachedHand)
+	{
+		const FVector StartLocation = FirearmMesh->GetSocketLocation(SlideStartSocket);
+		const FVector EndLocation = FirearmMesh->GetSocketLocation(SlideEndSocket);
+		const FVector HandLocation = InteractingHand->GetHandSelectionOrigin();
+		const FVector ClosestPoint = FMath::ClosestPointOnLine(StartLocation, EndLocation, HandLocation);
+
+		//DrawDebugSphere(GetWorld(), ClosestPoint, 5.0f, 8, FColor::Red, false, 0.1f);
+
+		const float DistanceToStart = FVector::Dist2D(ClosestPoint, StartLocation);
+		const float DistanceToEnd = FVector::Dist2D(ClosestPoint, EndLocation);
+
+		const float DistanceBetweenSockets = FVector::Dist2D(StartLocation, EndLocation);
+		const float Ratio = 1.0f - (DistanceToStart / DistanceBetweenSockets);
+
+		SlideProgress = Ratio;
+
+		// Pumping it?
+		if (!bHasSlidBack)
+		{
+			if (SlideProgress >= 1.0)
+			{
+				EjectRound();
+				OnSlideBack();
+
+				bHasSlidBack = true;
+			}
+		}
+		else
+		{
+			if (SlideProgress <= 0.0f)
+			{
+				bHasSlidBack = false;
+
+				LoadRoundFromMagazine();
+				OnSlideForward();
+			}
+		}
+	}
 }
 
 void AFirearm::SetAmmoPreviewStatus(EAmmoPreviewStatus NewPreviewStatus)
@@ -203,8 +253,6 @@ void AFirearm::SetAmmoPreviewStatus(EAmmoPreviewStatus NewPreviewStatus)
 
 bool AFirearm::CanGrab(const AHand* Hand)
 {
-	check(HandleBone.IsValid());
-
 	if (AttachedCharacter)
 	{
 		return false;
@@ -283,6 +331,8 @@ bool AFirearm::AttachToCharacter(AExtendedCharacter* NewCharacter)
 	}
 
 	AttachedCharacter = NewCharacter;
+	AttachedCharacter->EquippedFirearm = this;
+
 	return true;
 }
 
@@ -302,6 +352,7 @@ void AFirearm::DetachFromCharacter()
 		LoadedMagazine->SetActorEnableCollision(true);
 	}
 
+	AttachedCharacter->EquippedFirearm = nullptr;
 	AttachedCharacter = nullptr;
 }
 
@@ -346,9 +397,13 @@ void AFirearm::Fire()
 		UGameplayStatics::SpawnEmitterAttached(FireParticle, FirearmMesh, MuzzleBone);
 	}
 
-	//GEngine->AddOnScreenDebugMessage(3, 1.0f, FColor::Red, FString::Printf(TEXT("%s: BANG!"), *GetName()), true, FVector2D(3.0f, 3.0f));
+	FTransform MuzzleTransform = FirearmMesh->GetSocketTransform(MuzzleBone);
 
-	const FTransform MuzzleTransform = FirearmMesh->GetSocketTransform(MuzzleBone);
+	// If attached to a bot, use their control rotation instead of bone rotation
+	if (AttachedCharacter)
+	{
+		MuzzleTransform.SetRotation(AttachedCharacter->GetController()->GetControlRotation().Quaternion());
+	}
 
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = this;
@@ -377,6 +432,16 @@ void AFirearm::Fire()
 	if (AmmoLoadType == EFirearmAmmoLoadType::Automatic || AmmoLoadType == EFirearmAmmoLoadType::SemiAutomatic)
 	{
 		LoadRoundFromMagazine();
+	}
+
+	// Make some noise after we fire
+	if (AttachedCharacter)
+	{
+		AttachedCharacter->PawnMakeNoise(1.0f, GetActorLocation());
+	}
+	else if (AttachedHand && AttachedHand->GetPlayerPawn())
+	{
+		AttachedHand->GetPlayerPawn()->PawnMakeNoise(1.0f, GetActorLocation());
 	}
 }
 
@@ -411,7 +476,7 @@ void AFirearm::EjectRound()
 			auto Shell = GetWorld()->SpawnActor<ACartridge>(CartridgeClass, SpawnTransform, SpawnParams);
 
 			Shell->OnEjected(ChamberedRoundStatus == EChamberedRoundStatus::Spent);
-			Shell->GetMesh()->AddImpulse(Shell->GetActorForwardVector() * CartridgeEjectVelocity, NAME_None, true);
+			Shell->GetMesh()->AddImpulse(-Shell->GetActorForwardVector() * CartridgeEjectVelocity, NAME_None, true);
 		}
 	}
 
@@ -449,6 +514,23 @@ bool AFirearm::IsReadyToLoadMagazine(AMagazine* Magazine)
 	}
 
 	return false;
+}
+
+int32 AFirearm::GetLoadedRounds()
+{
+	int32 Rounds = 0;
+
+	if (ChamberedRoundStatus == EChamberedRoundStatus::Fresh)
+	{
+		Rounds++;
+	}
+
+	if (LoadedMagazine)
+	{
+		Rounds += LoadedMagazine->CurrentAmmo;
+	}
+
+	return Rounds;
 }
 
 void AFirearm::LoadMagazine(AMagazine* NewMagazine)
