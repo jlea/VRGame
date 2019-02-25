@@ -10,6 +10,7 @@
 class AFirearm;
 class USoundCue;
 class AWeapon;
+class ADecalActor;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FCharacterKilledDelegate, AExtendedCharacter*, Character, AController*, Killer);
 
@@ -57,6 +58,24 @@ public:
 	UPROPERTY()
 	FTimerHandle TimerHandle_DamageAnimation;
 
+	UPROPERTY(EditAnywhere, Category = "Character")
+	int32 MaxHealth;
+
+	UPROPERTY()
+	int32 CurrentHealth;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Character")
+	bool bDead;
+
+	UPROPERTY(BlueprintAssignable)
+	FCharacterKilledDelegate OnKilledDelegate;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Damage")
+	FName HeadBone;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Damage")
+	float HeadshotMultiplier;
+
 	//////////////////////////////////////////////////////////////////////////
 	//	Damage (FX)
 
@@ -91,6 +110,11 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = Damage)
 	TArray<FName> SeveredLimbs;
 
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = Damage)
+	TArray<TSubclassOf<ADecalActor>>	BloodDecals;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = Damage)
+	float BloodDecalMaxSprayDistance;
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Weapons
@@ -132,20 +156,8 @@ public:
 	TArray<UAnimMontage*>	DeathAnimations;
 
 	//////////////////////////////////////////////////////////////////////////
-	//	Variables
+	//	AI
 
-	UPROPERTY(EditAnywhere, Category = "Character")
-	int32 MaxHealth;
-
-	UPROPERTY()
-	int32 CurrentHealth;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Character")
-	bool bDead;
-
-	UPROPERTY(BlueprintAssignable)
-	FCharacterKilledDelegate OnKilledDelegate;
-
-	UPROPERTY(EditAnywhere, Category = "Character")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character")
 	FGenericTeamId TeamId;
 };

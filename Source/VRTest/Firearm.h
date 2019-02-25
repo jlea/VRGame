@@ -207,7 +207,10 @@ public:
 	float CartridgeEjectVelocity;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Animation")
-	UAnimMontage* FireAnimation;
+	TArray<UAnimMontage*> FireAnimation;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Animation")
+	TArray<UAnimMontage*> FireAnimationCharacter;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Animation")
 	TArray<FDamageAnimation> DamageAnimations;

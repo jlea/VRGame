@@ -382,9 +382,17 @@ void AFirearm::Fire()
 		AttachedHand->GetPlayerController()->PlayHapticEffect(RecoilEffect, AttachedHand->HandType);
 	}
 
-	if (FireAnimation)
+	if (FireAnimation.Num() > 0)
 	{
-		FirearmMesh->GetAnimInstance()->Montage_Play(FireAnimation);
+		FirearmMesh->GetAnimInstance()->Montage_Play(FireAnimation[FMath::RandRange(0, FireAnimation.Num() - 1)]);
+	}
+
+	if (FireAnimationCharacter.Num() > 0)
+	{
+		if (AttachedCharacter)
+		{
+			AttachedCharacter->PlayAnimMontage(FireAnimationCharacter[FMath::RandRange(0, FireAnimationCharacter.Num() - 1)]);
+		}
 	}
 
 	if (FireSound)
@@ -437,11 +445,12 @@ void AFirearm::Fire()
 	// Make some noise after we fire
 	if (AttachedCharacter)
 	{
-		AttachedCharacter->PawnMakeNoise(1.0f, GetActorLocation());
+		MakeNoise(1.0f, AttachedCharacter);
+		AttachedCharacter->MakeNoise(1.0f);
 	}
 	else if (AttachedHand && AttachedHand->GetPlayerPawn())
 	{
-		AttachedHand->GetPlayerPawn()->PawnMakeNoise(1.0f, GetActorLocation());
+		MakeNoise(1.0f, AttachedHand->GetPlayerPawn());
 	}
 }
 

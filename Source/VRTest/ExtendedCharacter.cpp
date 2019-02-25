@@ -7,7 +7,9 @@
 #include "Components/AudioComponent.h"
 #include "DamageTypes/DamageType_Extended.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Engine/DecalActor.h"
 #include "Firearm.h"
+#include "DrawDebugHelpers.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -18,8 +20,13 @@ AExtendedCharacter::AExtendedCharacter()
 
 	bPlayingDamageAnimation = false;
 
+	HeadshotMultiplier = 3.0f;
 	MaxHealth = 100;
 	bDead = false;
+
+	HeadBone = TEXT("Head");
+
+	BloodDecalMaxSprayDistance = 200.0f;
 }
 
 // Called when the game starts or when spawned
@@ -130,10 +137,63 @@ bool AExtendedCharacter::ShouldTakeDamage(float Damage, FDamageEvent const& Dama
 float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	const float BaseDamage = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+	float FinalDamage = BaseDamage;
 
 	if (!bDead)
 	{
-		CurrentHealth -= BaseDamage;
+		FHitResult HitResult;
+		if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
+		{
+			const FPointDamageEvent* PointDamageEvent = (const FPointDamageEvent*)&DamageEvent;
+			if (PointDamageEvent)
+			{
+				HitResult = PointDamageEvent->HitInfo;
+
+				if (!HeadBone.IsNone())
+				{
+					if (HitResult.BoneName == HeadBone)
+					{
+						FinalDamage *= HeadshotMultiplier;
+					}
+				}
+			}
+		}
+
+		// Trace behind to find where our blood might spawn
+		if (BloodDecals.Num() > 0)
+		{
+			FHitResult BloodTrace;
+			FCollisionObjectQueryParams ObjectQueryParams;
+			ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+			ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
+			ObjectQueryParams.RemoveObjectTypesToQuery(ECC_Pawn);
+
+			const FVector TraceStart = DamageCauser->GetActorLocation();
+			const FVector TraceEnd = TraceStart + (DamageCauser->GetActorForwardVector() * BloodDecalMaxSprayDistance);
+			GetWorld()->LineTraceSingleByObjectType(BloodTrace, TraceStart, TraceEnd, ObjectQueryParams);
+
+			DrawDebugSphere(GetWorld(), TraceStart, 20.0f, 8, FColor::Red, false, 2.0f);
+			DrawDebugSphere(GetWorld(), TraceEnd, 20.0f, 8, FColor::Orange, false, 2.0f);
+
+			if (BloodTrace.IsValidBlockingHit())
+			{
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.Owner = this;
+
+				const FVector SpawnLocation = BloodTrace.ImpactPoint;
+				const FRotator SpawnRotation = BloodTrace.ImpactNormal.Rotation() + FRotator(90.0f, 90.0f, 180.0f);
+
+				GetWorld()->SpawnActor<ADecalActor>(BloodDecals[FMath::RandRange(0, BloodDecals.Num() - 1)], SpawnLocation, SpawnRotation, SpawnParams);
+
+				DrawDebugLine(GetWorld(), TraceStart, BloodTrace.ImpactPoint, FColor::Green, false, 2.0f);
+			}
+			else
+			{
+				DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Red, false, 2.0f);
+			}
+		}
+	
+		CurrentHealth -= FinalDamage;
 		if (CurrentHealth <= 0.0f)
 		{
 			Kill(EventInstigator, DamageCauser, DamageEvent);
@@ -142,25 +202,64 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 		{
 			if (!bPlayingDamageAnimation)
 			{
+				// See which direction our shot is attack from
+				const FVector AttackDir = (HitResult.TraceEnd - HitResult.TraceStart).GetSafeNormal();
+				const FRotator RotationDelta = (AttackDir.Rotation() - GetMesh()->GetComponentRotation()).GetNormalized();
+
 				if (EquippedFirearm)
 				{
-					auto FirearmDamageAnimations = EquippedFirearm->DamageAnimations;
+					const float YawThreshold = 30.0f;
 
-					int32 RandomAnimation = FMath::RandRange(0, FirearmDamageAnimations.Num() - 1);
-					if (FirearmDamageAnimations.IsValidIndex(RandomAnimation))
+					FQuat BetweenQuat = FQuat::FindBetweenVectors(AttackDir, GetMesh()->GetForwardVector());
+
+					UE_LOG(LogTemp, Warning, TEXT("Hit from %g angle"), BetweenQuat.Rotator().Yaw);
+
+					TArray<FDamageAnimation>	ValidDamageAnimations;
+					for (auto DamageAnimation : EquippedFirearm->DamageAnimations)
 					{
-						float AnimDuration = PlayAnimMontage(FirearmDamageAnimations[RandomAnimation].Animation);
-						bPlayingDamageAnimation = true;
+						switch (DamageAnimation.DamageDirection)
+						{
+						case EDamageDirection::Front:
+							if (FMath::Abs(RotationDelta.Yaw) < YawThreshold)
+							{
+								ValidDamageAnimations.Add(DamageAnimation);
+							}
+							break;
+						case EDamageDirection::Left:
+							if (RotationDelta.Yaw < YawThreshold)
+							{
+								ValidDamageAnimations.Add(DamageAnimation);
+							}
+							break;
+						case EDamageDirection::Right:
+							if (RotationDelta.Yaw > YawThreshold)
+							{
+								ValidDamageAnimations.Add(DamageAnimation);
+							}
+							break;
+						default:
+							break;
+						}
+					}
+				
+					if (ValidDamageAnimations.Num() > 0)
+					{
+						int32 RandomAnimation = FMath::RandRange(0, ValidDamageAnimations.Num() - 1);
+						if (ValidDamageAnimations.IsValidIndex(RandomAnimation))
+						{
+							float AnimDuration = PlayAnimMontage(ValidDamageAnimations[RandomAnimation].Animation);
+							bPlayingDamageAnimation = true;
 
-						//Schedule the ragdoll
-						GetWorld()->GetTimerManager().SetTimer(TimerHandle_DamageAnimation, this, &AExtendedCharacter::FinishDamageAnimation, AnimDuration, false);
+							//Schedule the ragdoll
+							GetWorld()->GetTimerManager().SetTimer(TimerHandle_DamageAnimation, this, &AExtendedCharacter::FinishDamageAnimation, AnimDuration, false);
+						}
 					}
 				}
 			}
 		}
 	}
 
-	return BaseDamage;
+	return FinalDamage;
 }
 
 void AExtendedCharacter::PlayDeathAnimation()
@@ -189,6 +288,14 @@ void AExtendedCharacter::PlayDeathAnimation()
 
 bool AExtendedCharacter::ShouldRagdollOnDeath(FHitResult Hit)
 {
+	if (!HeadBone.IsNone())
+	{
+		if (Hit.BoneName == HeadBone)
+		{
+			return true;
+		}
+	}
+
 	auto DeathAnimationsToTest = DeathAnimations;
 	if (EquippedFirearm)
 	{
@@ -210,20 +317,23 @@ void AExtendedCharacter::Kill(AController* Killer, AActor *DamageCauser, struct 
 
 	GetController()->UnPossess();
 
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	GetCapsuleComponent()->Deactivate();
-
-	GetCharacterMovement()->StopMovementImmediately();
-	GetCharacterMovement()->DisableMovement();
-	GetCharacterMovement()->SetComponentTickEnabled(false);
-
 	FHitResult HitResult;
+	bool bWasHeadshot = false;
+
 	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
 	{
 		const FPointDamageEvent* PointDamageEvent = (const FPointDamageEvent*)&DamageEvent;
 		if (PointDamageEvent)
 		{
 			HitResult = PointDamageEvent->HitInfo;
+
+			if (!HeadBone.IsNone())
+			{
+				if (HitResult.BoneName == HeadBone)
+				{
+					bWasHeadshot = true;
+				}
+			}
 
 			if (DamageType && DamageType->bSeverLimbs)
 			{
@@ -232,7 +342,14 @@ void AExtendedCharacter::Kill(AController* Killer, AActor *DamageCauser, struct 
 		}
 	}
 
-	PlayDialogueSound(DeathSound);
+	if(bWasHeadshot)
+	{
+		
+	}
+	else
+	{
+		PlayDialogueSound(DeathSound);
+	}
 
 	if (ShouldRagdollOnDeath(HitResult))
 	{
@@ -261,6 +378,12 @@ void AExtendedCharacter::Ragdoll()
 	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
 	GetMesh()->SetSimulatePhysics(true);
 
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCapsuleComponent()->Deactivate();
+
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->SetComponentTickEnabled(false);
 }
 
 void AExtendedCharacter::PlayDialogueSound(USoundCue* Sound)
@@ -276,7 +399,7 @@ void AExtendedCharacter::PlayDialogueSound(USoundCue* Sound)
 		CurrentDialogue->Stop();
 	}
 
-	CurrentDialogue = UGameplayStatics::SpawnSoundAttached(Sound, GetMesh());
+	CurrentDialogue = UGameplayStatics::SpawnSoundAttached(Sound, GetMesh(), HeadBone);
 
 	//Sound event
 	MakeNoise(1.0f, this, GetActorLocation(), 2500.0f);
