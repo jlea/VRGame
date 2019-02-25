@@ -11,18 +11,24 @@ ACharacterAIController::ACharacterAIController()
 	bAttachToPawn = true;
 
 	bShouldFire = false;
-	SetGenericTeamId(FGenericTeamId(1));
 }
 
-FGenericTeamId ACharacterAIController::GetGenericTeamId() const
+void ACharacterAIController::UnPossess()
 {
-	auto Me = Cast<AExtendedCharacter>(GetPawn());
+	Super::UnPossess();
+
+	Destroy();
+}
+
+void ACharacterAIController::Possess(APawn* InPawn)
+{
+	Super::Possess(InPawn);
+
+	auto Me = Cast<AExtendedCharacter>(InPawn);
 	if (Me)
 	{
-		return Me->TeamId;
+		SetGenericTeamId(FGenericTeamId(Me->TeamId));
 	}
-	
-	return Super::GetGenericTeamId();
 }
 
 void ACharacterAIController::Tick(float DeltaTime)
@@ -45,7 +51,7 @@ void ACharacterAIController::Tick(float DeltaTime)
 		{
 			if (Firearm->AmmoLoadType == EFirearmAmmoLoadType::SemiAutomatic)
 			{
-				const bool bCanFire = DotToTarget > 0.9f;
+				const bool bCanFire = DotToTarget > 0.9f && !Me->bPlayingDamageAnimation;
 				if (bShouldFire && bCanFire)
 				{
 					if (Firearm->bTriggerDown)

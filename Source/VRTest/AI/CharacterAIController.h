@@ -17,7 +17,12 @@ class VRTEST_API ACharacterAIController : public AAIController
 	ACharacterAIController();
 
 public:
-	virtual FGenericTeamId GetGenericTeamId() const override;
+
+	UFUNCTION(BlueprintPure, Category = "AI")
+	FGenericTeamId GetTeamId() const { return GetGenericTeamId(); }
+
+	virtual void UnPossess() override;
+	virtual void Possess(APawn* InPawn) override;
 
 	virtual void Tick(float DeltaTime);
 	virtual void UpdateControlRotation(float DeltaTime, bool bUpdatePawn /* = true */) override;
