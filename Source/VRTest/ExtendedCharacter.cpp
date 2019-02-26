@@ -10,6 +10,7 @@
 #include "Engine/DecalActor.h"
 #include "Firearm.h"
 #include "DrawDebugHelpers.h"
+#include "Perception/PawnSensingComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -17,6 +18,10 @@ AExtendedCharacter::AExtendedCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	SensingComponent = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
+	SensingComponent->bEnableSensingUpdates = false;
+	SensingComponent->bOnlySensePlayers = false;
 
 	bPlayingDamageAnimation = false;
 

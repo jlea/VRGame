@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "CharacterAIController.h"
+#include "Perception/PawnSensingComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "ExtendedCharacter.h"
 #include "Firearm.h"
 
@@ -9,6 +11,14 @@ ACharacterAIController::ACharacterAIController()
 	TurnInterpSpeed = 5.0f;
 	bAllowStrafe = true;
 	bAttachToPawn = true;
+
+	TargetEnemyKeyName = "TargetEnemy";
+	TargetAliveKeyName = "TargetAlive";
+	TargetHasLOSKeyName = "TargetHasLOS";
+	TargetLastSeenPositionKeyName = "TargetLastSeenPosition";
+	TargetLastSeenVelocityKeyName = "TargetLastSeenVelocity";
+	TargetLastSeenTimeKeyName = "TargetLastSeenTime";
+	TargetDistanceKeyName = "TargetDistance";
 
 	bShouldFire = false;
 }
@@ -28,6 +38,14 @@ void ACharacterAIController::Possess(APawn* InPawn)
 	if (Me)
 	{
 		SetGenericTeamId(FGenericTeamId(Me->TeamId));
+
+		//Que up our update
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_UpdateTimer, this, &ThisClass::DoVisibilityCheck, 0.2f, true);
+
+		Me->GetSensingComponent()->Activate();
+		Me->GetSensingComponent()->SetSensingUpdatesEnabled(true);
+		Me->GetSensingComponent()->OnHearNoise.AddDynamic(this, &ThisClass::OnHearNoise);
+		Me->GetSensingComponent()->OnSeePawn.AddDynamic(this, &ThisClass::OnSeePawn);
 	}
 }
 
@@ -115,4 +133,215 @@ void ACharacterAIController::UpdateControlRotation(float DeltaTime, bool bUpdate
 void ACharacterAIController::SetWantsFire(bool bEnabled)
 {
 	bShouldFire = bEnabled;
+}
+
+void ACharacterAIController::UpdateMemory()
+{
+	if (!GetPawn())
+	{
+		return;
+	}
+
+	if (GetTargetPawn())
+	{
+		//If we have LOS update their last known positions
+		if (TargetMemory.bHasLOS)
+		{
+			TargetMemory.LastSeenPosition = GetTargetPawn()->GetActorLocation();
+			TargetMemory.LastSeenVelocity = GetTargetPawn()->GetVelocity();
+			TargetMemory.LastSeenTimestamp = GetWorld()->GetTimeSeconds();
+		}
+
+		//Check if they're still alive
+		if (TargetMemory.bIsAlive)
+		{
+			auto TargetCharacter = Cast<AExtendedCharacter>(GetTargetPawn());
+			if (TargetCharacter)
+			{
+				if (TargetCharacter->bDead)
+				{
+					//They're dead
+					OnTargetKilled();
+
+					SetNewEnemy(nullptr);
+				}
+			}
+		}
+	}
+
+	//Update our blackboard keys always
+ 	UpdateTargetBlackboard();
+// 	UpdateSoundBlackboard();
+}
+
+void ACharacterAIController::UpdateTargetBlackboard()
+{
+	auto BlackboardComp = GetBlackboardComponent();
+	if (!BlackboardComp)
+	{
+		return;
+	}
+
+	float DistanceToTarget = -1.0f;
+
+	if (TargetMemory.bHasLOS)
+	{
+		DistanceToTarget = (GetPawn()->GetActorLocation() - GetTargetPawn()->GetActorLocation()).Size();
+	}
+	else
+	{
+		//Use their last seen position otherwise 
+		DistanceToTarget = (GetPawn()->GetActorLocation() - TargetMemory.LastSeenPosition).Size();
+	}
+
+	BlackboardComp->SetValueAsObject(TargetEnemyKeyName, TargetMemory.TargetPawn);
+	BlackboardComp->SetValueAsBool(TargetHasLOSKeyName, TargetMemory.bHasLOS);
+	BlackboardComp->SetValueAsBool(TargetAliveKeyName, TargetMemory.bIsAlive);
+	BlackboardComp->SetValueAsVector(TargetLastSeenPositionKeyName, TargetMemory.LastSeenPosition);
+	BlackboardComp->SetValueAsVector(TargetLastSeenVelocityKeyName, TargetMemory.LastSeenVelocity);
+	BlackboardComp->SetValueAsFloat(TargetLastSeenTimeKeyName, GetWorld()->GetTimeSeconds() - TargetMemory.LastSeenTimestamp);
+	BlackboardComp->SetValueAsFloat(TargetDistanceKeyName, DistanceToTarget);
+}
+
+void ACharacterAIController::DoVisibilityCheck()
+{
+	if (GetTargetPawn())
+	{
+		if (LineOfSightTo(GetTargetPawn()))
+		{
+			SetLOSToTarget(true);
+		}
+		else
+		{
+			SetLOSToTarget(false);
+		}
+	}
+
+	UpdateMemory();
+}
+
+bool ACharacterAIController::ShouldSetAsEnemy(APawn* Enemy)
+{
+	if (Enemy == GetTargetPawn())
+	{
+		return false;
+	}
+
+	AExtendedCharacter* TargetCharacter = Cast<AExtendedCharacter>(Enemy);
+	if (TargetCharacter)
+	{
+		if (TargetCharacter->TeamId == GetGenericTeamId())
+		{
+			return false;
+		}
+
+		//No already dead pawns
+		if (TargetCharacter->bDead)
+		{
+			return false;
+		}
+
+		//Not if we already have a target
+		if (GetTargetPawn())
+		{
+			if (GetPriorityForTarget(Enemy) > GetPriorityForTarget(GetTargetPawn()))
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+void ACharacterAIController::SetNewEnemy(APawn* NewEnemy)
+{
+	//Set our new target
+	FAITargetMemory NewMemory;
+	NewMemory.TargetPawn = NewEnemy;
+
+	TargetMemory = NewMemory;
+
+	//Force a refresh
+	DoVisibilityCheck();
+}
+
+void ACharacterAIController::SetLOSToTarget(bool bHasLOS)
+{
+	if (bHasLOS)
+	{
+		if (!TargetMemory.bHasLOS)
+		{
+			TargetMemory.bHasLOS = true;
+
+			OnGainedLOS();
+		}
+	}
+	else
+	{
+		if (TargetMemory.bHasLOS)
+		{
+			TargetMemory.bHasLOS = false;
+
+			OnLostLOS();
+		}
+	}
+}
+
+int32 ACharacterAIController::GetPriorityForTarget(APawn* Target)
+{
+	//Closer = higher priority
+	float Priority = 0.0f;
+
+	//Current target gets love
+	//if (Target == TargetMemory.TargetPawn)
+	//	Priority += 1.0f;
+
+	float DistanceToTarget = (GetPawn()->GetActorLocation() - Target->GetActorLocation()).Size();
+	//Divide it by distance. So 10m reduces by 1.
+	DistanceToTarget /= 100.0f;
+
+	Priority -= DistanceToTarget;
+
+	return Priority;
+}
+
+void ACharacterAIController::OnHearNoise(APawn *OtherActor, const FVector &Location, float Volume)
+{
+// 	AFPSCharacter* CharacterEmitter = Cast<AFPSCharacter>(OtherActor);
+// 	if (IsTeamMate(CharacterEmitter))
+// 	{
+// 		return;
+// 	}
+// 
+// 	//Update our sound memory
+// 	FAISoundMemory NewSoundMemory;
+// 	NewSoundMemory.bActive = true;
+// 	NewSoundMemory.Timestamp = GetWorld()->GetTimeSeconds();
+// 	NewSoundMemory.Location = Location;
+// 	NewSoundMemory.EmitterPawn = OtherActor;
+// 	NewSoundMemory.Volume = Volume;
+// 
+// 	SoundMemory = NewSoundMemory;
+// 
+// 	UpdateSoundBlackboard();
+}
+
+void ACharacterAIController::OnSeePawn(APawn *OtherPawn)
+{
+	if (OtherPawn == GetPawn())
+	{
+		return;
+	}
+
+	if (ShouldSetAsEnemy(OtherPawn))
+	{
+		SetNewEnemy(OtherPawn);
+	}
 }

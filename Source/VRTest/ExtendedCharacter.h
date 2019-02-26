@@ -7,6 +7,7 @@
 #include "GenericTeamAgentInterface.h"
 #include "ExtendedCharacter.generated.h"
 
+class UPawnSensingComponent;
 class AFirearm;
 class USoundCue;
 class AWeapon;
@@ -158,6 +159,13 @@ public:
 	//////////////////////////////////////////////////////////////////////////
 	//	AI
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character")
+public:
+	UPawnSensingComponent* GetSensingComponent() { return SensingComponent; }
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI")
 	FGenericTeamId TeamId;
+
+protected:
+	UPROPERTY(BlueprintReadOnly, Category = "AI")
+	UPawnSensingComponent*	SensingComponent;
 };
