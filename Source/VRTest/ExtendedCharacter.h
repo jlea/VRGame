@@ -34,6 +34,7 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void GetActorEyesViewPoint(FVector& Location, FRotator& Rotation) const override;
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Damage (Gameplay)
@@ -166,6 +167,6 @@ public:
 	FGenericTeamId TeamId;
 
 protected:
-	UPROPERTY(BlueprintReadOnly, Category = "AI")
+	UPROPERTY(BlueprintReadOnly, VisibleDefaultsOnly, Category = "AI")
 	UPawnSensingComponent*	SensingComponent;
 };

@@ -56,6 +56,15 @@ void AExtendedCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
+void AExtendedCharacter::GetActorEyesViewPoint(FVector& Location, FRotator& Rotation) const
+{
+	const int32 HeadBoneIndex = GetMesh()->GetBoneIndex(HeadBone);
+	const FTransform HeadBoneTransform = GetMesh()->GetBoneTransform(HeadBoneIndex);
+
+	Location = HeadBoneTransform.GetLocation();
+	Rotation = HeadBoneTransform.GetRotation().Rotator();
+}
+
 void AExtendedCharacter::FinishDamageAnimation()
 {
 	bPlayingDamageAnimation = false;
@@ -207,6 +216,8 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 		{
 			if (!bPlayingDamageAnimation)
 			{
+				PlayDialogueSound(PainSound);
+
 				// See which direction our shot is attack from
 				const FVector AttackDir = (HitResult.TraceEnd - HitResult.TraceStart).GetSafeNormal();
 				const FRotator RotationDelta = (AttackDir.Rotation() - GetMesh()->GetComponentRotation()).GetNormalized();
@@ -216,8 +227,6 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 					const float YawThreshold = 30.0f;
 
 					FQuat BetweenQuat = FQuat::FindBetweenVectors(AttackDir, GetMesh()->GetForwardVector());
-
-					UE_LOG(LogTemp, Warning, TEXT("Hit from %g angle"), BetweenQuat.Rotator().Yaw);
 
 					TArray<FDamageAnimation>	ValidDamageAnimations;
 					for (auto DamageAnimation : EquippedFirearm->DamageAnimations)

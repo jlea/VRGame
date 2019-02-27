@@ -227,7 +227,7 @@ bool ACharacterAIController::ShouldSetAsEnemy(APawn* Enemy)
 		return false;
 	}
 
-	AExtendedCharacter* TargetCharacter = Cast<AExtendedCharacter>(Enemy);
+	auto TargetCharacter = Cast<AExtendedCharacter>(Enemy);
 	if (TargetCharacter)
 	{
 		if (TargetCharacter->TeamId == GetGenericTeamId())
@@ -257,7 +257,7 @@ bool ACharacterAIController::ShouldSetAsEnemy(APawn* Enemy)
 		return true;
 	}
 
-	return false;
+	return true;
 }
 
 void ACharacterAIController::SetNewEnemy(APawn* NewEnemy)
