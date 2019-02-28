@@ -36,6 +36,8 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual FVector GetTargetLocation(AActor* RequestedBy /* = nullptr */) const override;
+
 	//////////////////////////////////////////////////////////////////////////
 	//	Input
 
@@ -47,6 +49,9 @@ public:
 
 	void GrabRightPressed();
 	void GrabRightReleased();
+
+	void TeleportPressed();
+	void TeleportReleased();
 
 	void BulletTimePressed();
 	void BulletTimeReleased();
@@ -107,4 +112,32 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bullet Time")
 	float BulletTimeModifier;
+
+	//////////////////////////////////////////////////////////////////////////
+	//	Damage
+	
+	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Damage")
+	void OnHealthChanged(float Amount);
+
+	void Kill(AController* Killer, AActor *DamageCauser, struct FDamageEvent const& DamageEvent);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Damage")
+	void OnKilled(AController* Killer, AActor *DamageCauser, struct FDamageEvent const& DamageEvent);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Damage")
+	int32 MaxHealth;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Damage")
+	int32 CurrentHealth;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Damage")
+	bool bDead;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Damage")
+	float LastDamageTimestamp;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Damage")
+	float DeathTimestamp;
 };

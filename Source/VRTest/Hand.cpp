@@ -77,6 +77,11 @@ void AHand::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (bWantsTeleport)
+	{
+		UpdateTeleport();
+	}
+	
 	UpdateNearbyActors();
 
 	if (InteractingActor || bWantsGrab)
@@ -236,3 +241,55 @@ void AHand::ReleaseActor()
 	ReceiveOnReleaseHeldActor(InteractingActor);
 }
 
+void AHand::OnTeleportPressed()
+{
+	bWantsTeleport = true;
+}
+
+void AHand::OnTeleportReleased()
+{
+	TryTeleport();
+
+	bWantsTeleport = false;
+}
+
+void AHand::TryTeleport()
+{
+	if (bHasValidTeleportLocation)
+	{
+		GetPlayerPawn()->SetActorLocation(ValidTeleportLocation);
+	}
+}
+
+void AHand::UpdateTeleport()
+{
+	bHasValidTeleportLocation = false;
+
+	FHitResult TeleporTrace;
+	
+	TArray<AActor*>	ActorsToIgnore;
+	ActorsToIgnore.Add(this);
+	ActorsToIgnore.Add(GetPlayerPawn());
+	ActorsToIgnore.Add(InteractingActor);
+
+	FPredictProjectilePathParams TeleportParams;
+	TeleportParams.ProjectileRadius = 2.0f;
+	TeleportParams.StartLocation = SphereCollision->GetComponentLocation();
+	TeleportParams.bTraceWithChannel = true;
+	TeleportParams.bTraceWithCollision = true;
+	TeleportParams.TraceChannel = ECC_Visibility;
+	TeleportParams.DrawDebugType = EDrawDebugTrace::ForOneFrame;
+	TeleportParams.LaunchVelocity = SphereCollision->GetForwardVector() * TeleportProjectileVelocity;
+	TeleportParams.ActorsToIgnore = ActorsToIgnore;
+
+	UGameplayStatics::PredictProjectilePath(this, TeleportParams, TeleportResult);
+	
+	// Now trace downwards
+	FHitResult PostTraceHit;
+	GetWorld()->LineTraceSingleByChannel(PostTraceHit, TeleportResult.LastTraceDestination.Location, (TeleportResult.LastTraceDestination.Location + FVector::UpVector * 100.0f), ECC_Visibility);
+	if (PostTraceHit.IsValidBlockingHit())
+	{
+		bHasValidTeleportLocation = true;
+		ValidTeleportLocation = PostTraceHit.ImpactPoint;
+	}
+}

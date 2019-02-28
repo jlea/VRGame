@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Classes/Camera/CameraComponent.h"
 #include "Components/SceneCaptureComponent2D.h"
+#include "VRGameViewportClient.h"
 #include "Hand.h"
 
 // Sets default values
@@ -20,6 +21,8 @@ APlayerPawn::APlayerPawn()
 	VROrigin->SetupAttachment(SceneRoot);
 
 	ScopeCaptureComponent = CreateDefaultSubobject<USceneCaptureComponent2D>("ScopeRender");
+
+	MaxHealth = 500;
 
 	ScopeInterpSpeed = 5.0f;
 	CameraHeightOffset = 0.0f;
@@ -50,6 +53,9 @@ void APlayerPawn::BeginPlay()
 	VROrigin->AddLocalOffset(FVector(0, 0, CameraHeightOffset));
 
 	ScopeCaptureComponent->Deactivate();
+
+	CurrentHealth = MaxHealth;
+	bDead = false;
 }
 
 // Called every frame
@@ -96,7 +102,19 @@ void APlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	InputComponent->BindAction("GrabRight", IE_Pressed, this, &APlayerPawn::GrabRightPressed);
 	InputComponent->BindAction("GrabRight", IE_Released, this, &APlayerPawn::GrabRightReleased);
 
+	InputComponent->BindAction("Teleport", IE_Pressed, this, &APlayerPawn::TeleportPressed);
+	InputComponent->BindAction("Teleport", IE_Released, this, &APlayerPawn::TeleportReleased);
+
 	InputComponent->BindAction("BulletTime", IE_Pressed, this, &APlayerPawn::BulletTimePressed);
+}
+
+FVector APlayerPawn::GetTargetLocation(AActor* RequestedBy /* = nullptr */) const
+{
+	FVector EyeLocation;
+	FRotator EyeRotation;
+
+	GetActorEyesViewPoint(EyeLocation, EyeRotation);
+	return EyeLocation;
 }
 
 void APlayerPawn::DropLeftPressed()
@@ -129,6 +147,16 @@ void APlayerPawn::GrabRightReleased()
 	RightHand->OnGrabReleased();
 }
 
+void APlayerPawn::TeleportPressed()
+{
+	RightHand->OnTeleportPressed();
+}
+
+void APlayerPawn::TeleportReleased()
+{
+	RightHand->OnTeleportReleased();
+}
+
 void APlayerPawn::BulletTimePressed()
 {
 	if (!bBulletTime)
@@ -148,5 +176,35 @@ void APlayerPawn::BulletTimePressed()
 void APlayerPawn::SetScopeFirearm(AFirearm* Firearm)
 {
 
+}
+
+float APlayerPawn::TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	const float BaseDamage = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+	float FinalDamage = BaseDamage;
+
+	if (!bDead)
+	{
+		CurrentHealth -= FinalDamage;
+		LastDamageTimestamp = GetWorld()->GetTimeSeconds();
+
+		if (CurrentHealth <= 0.0f)
+		{
+			Kill(EventInstigator, DamageCauser, DamageEvent);
+		}
+		else
+		{
+			OnHealthChanged(-FinalDamage);
+		}
+	}
+	
+	return FinalDamage;
+}
+
+void APlayerPawn::Kill(AController* Killer, AActor *DamageCauser, struct FDamageEvent const& DamageEvent)
+{
+	bDead = true;
+
+	DeathTimestamp = GetWorld()->GetTimeSeconds();
 }
 

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Kismet/GameplayStaticsTypes.h"
 #include "MotionControllerComponent.h"
 #include "Hand.generated.h"
 
@@ -36,6 +37,21 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Hand")
 	bool bWantsGrab;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Teleport")
+	bool bWantsTeleport;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Teleport")
+	FPredictProjectilePathResult TeleportResult;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Teleport")
+	FVector ValidTeleportLocation;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Teleport")
+	bool bHasValidTeleportLocation;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Teleport")
+	float TeleportProjectileVelocity;
+
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Hand")
 	USkeletalMeshComponent*	HandMesh;
 
@@ -55,6 +71,9 @@ public:
 	void OnDropPressed();
 	void OnGrabPressed();
 	void OnGrabReleased();
+
+	void OnTeleportPressed();
+	void OnTeleportReleased();
 
 	UFUNCTION(BlueprintPure, Category = "Hand")
 	USkeletalMeshComponent* GetHandMesh() const { return HandMesh; }
@@ -87,6 +106,9 @@ public:
 	FVector GetHandSelectionOrigin() const;
 
 private:
+	void TryTeleport();
+	void UpdateTeleport();
+
 	void UpdateNearbyActors();
 
 	void Grab(AInteractableActor* InteractableActor);
