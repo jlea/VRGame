@@ -58,6 +58,7 @@ public:
 
 	virtual void Tick(float DeltaTime);
 	virtual void UpdateControlRotation(float DeltaTime, bool bUpdatePawn /* = true */) override;
+	virtual FVector GetFocalPointOnActor(const AActor *Actor) const;
 
 	UFUNCTION(BlueprintCallable)
 	void SetWantsFire(bool bEnabled);

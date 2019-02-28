@@ -4,6 +4,7 @@
 #include "Perception/PawnSensingComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "ExtendedCharacter.h"
+#include "PlayerPawn.h"
 #include "Firearm.h"
 
 ACharacterAIController::ACharacterAIController()
@@ -130,6 +131,17 @@ void ACharacterAIController::UpdateControlRotation(float DeltaTime, bool bUpdate
 	}
 }
 
+FVector ACharacterAIController::GetFocalPointOnActor(const AActor *Actor) const
+{
+	auto Pawn = Cast<APawn>(Actor);
+	if (Pawn)
+	{
+		return Pawn->GetTargetLocation();
+	}
+
+	return Super::GetFocalPointOnActor(Actor);
+}
+
 void ACharacterAIController::SetWantsFire(bool bEnabled)
 {
 	bShouldFire = bEnabled;
@@ -156,9 +168,22 @@ void ACharacterAIController::UpdateMemory()
 		if (TargetMemory.bIsAlive)
 		{
 			auto TargetCharacter = Cast<AExtendedCharacter>(GetTargetPawn());
+			auto TargetPlayer = Cast<AExtendedCharacter>(GetTargetPawn());
+
 			if (TargetCharacter)
 			{
 				if (TargetCharacter->bDead)
+				{
+					//They're dead
+					OnTargetKilled();
+
+					SetNewEnemy(nullptr);
+				}
+			}
+			
+			if (TargetPlayer)
+			{
+				if (TargetPlayer->bDead)
 				{
 					//They're dead
 					OnTargetKilled();
@@ -255,6 +280,16 @@ bool ACharacterAIController::ShouldSetAsEnemy(APawn* Enemy)
 		}
 
 		return true;
+	}
+
+	auto TargetPlayer = Cast<APlayerPawn>(Enemy);
+	if (TargetPlayer)
+	{	
+		//No already dead pawns
+		if (TargetPlayer->bDead)
+		{
+			return false;
+		}
 	}
 
 	return true;
