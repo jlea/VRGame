@@ -66,7 +66,7 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimi
 
 	UGameplayStatics::ApplyPointDamage(OtherActor, Damage, NormalImpulse, Hit, GetInstigatorController(), this, DamageType);
 
-	if (OtherComp)
+	if (OtherComp && OtherComp->IsSimulatingPhysics())
 	{
 		OtherComp->AddImpulse(-Hit.ImpactNormal * ImpactForceScale);
 	}
