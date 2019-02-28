@@ -22,7 +22,9 @@ AFirearm::AFirearm()
 	SlideStartSocket = TEXT("SlideStart");
 	SlideEndSocket = TEXT("SlideEnd");
 
-	bDropOnRelease = false;
+	bDropOnRelease = false; 
+	bAttachToSocket = true;
+
 	bEjectRoundOnFire = true;
 
 	FirearmMesh = CreateDefaultSubobject<USkeletalMeshComponent>("HandMesh");
@@ -52,7 +54,7 @@ AFirearm::AFirearm()
 	AmmoPreviewStatus = EAmmoPreviewStatus::None;
 
 	bTriggerDown = false;
-	HandAttachSocket = TEXT("WeaponMountSocket");
+	HandAttachSocket = TEXT("Weapon");
 	MagazineAttachSocket = TEXT("MagazineAttachSocket");
 	CharacterAttachSocket = TEXT("WeaponSocket");
 	ShellAttachSocket = TEXT("ShellEjectSocket");
@@ -291,16 +293,6 @@ void AFirearm::OnEndInteraction(AHand* Hand)
 void AFirearm::OnBeginPickup(AHand* Hand)
 {
 	Super::OnBeginPickup(Hand);
-
-	AttachToComponent(Hand->GetHandMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, HandAttachSocket);
-
-	if (Hand->HandType == EControllerHand::Left)
-	{
-		FRotator NewRelativeRotation = RootComponent->RelativeRotation;
-		NewRelativeRotation.Roll += 180.0f;
-
-		SetActorRelativeRotation(NewRelativeRotation);
-	}
 
 	OnFirearmPickedUp.Broadcast(this);
 }

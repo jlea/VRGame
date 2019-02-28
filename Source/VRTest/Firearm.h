@@ -120,9 +120,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	bool EjectLoadedMagazine();
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon (Animations)")
-	FName HandAttachSocket;
-
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon")
 	TArray<FName> PickupBones;
 

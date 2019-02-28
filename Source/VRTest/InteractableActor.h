@@ -8,6 +8,7 @@
 
 class AHand;
 class AHUD;
+class USoundCue;
 
 UENUM(BlueprintType)
 enum class EInteractPriority : uint8
@@ -37,7 +38,6 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual bool CanGrab(const AHand* Hand);
-	//virtual bool CanDrop(const AHand* Hand) { return true; }
 
 	virtual void DrawHUD(AHUD* HUD, AHand* InteractingHand);
 
@@ -97,8 +97,18 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "VR")
 	FInteractableActorEvent OnPickedUpDelegate;
 
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Animations")
+	bool bAttachToSocket;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Animations", meta = (EditCondition=bAttachToSocket))
+	FName HandAttachSocket;
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Special
 
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	USoundCue*	PickupSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	USoundCue*	HolsterSound;
 };

@@ -3,6 +3,8 @@
 #include "InteractableActor.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "VRGameState.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
 #include "Hand.h"
 
 // Sets default values
@@ -17,6 +19,7 @@ AInteractableActor::AInteractableActor()
 	InteractPriority = EInteractPriority::Low;
 
 	bDropOnRelease = true;
+	bAttachToSocket = false;
 }
 
 // Called when the game starts or when spawned
@@ -36,7 +39,6 @@ void AInteractableActor::BeginPlay()
 void AInteractableActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 bool AInteractableActor::CanGrab(const AHand* Hand)
@@ -110,7 +112,25 @@ void AInteractableActor::OnBeginPickup(AHand* Hand)
 	if (RootPrimitive)
 	{
 		RootPrimitive->SetSimulatePhysics(false);
-		AttachToComponent(Hand->GetHandMesh(), FAttachmentTransformRules::KeepWorldTransform);
+	
+		if (bAttachToSocket)
+		{
+			AttachToComponent(Hand->GetHandMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, HandAttachSocket);
+
+			if (Hand->HandType == EControllerHand::Left)
+			{
+				FRotator NewRelativeRotation = RootComponent->RelativeRotation;
+				NewRelativeRotation.Roll += 180.0f;
+
+				SetActorRelativeRotation(NewRelativeRotation);
+			}
+		}
+		else
+		{
+			AttachToComponent(Hand->GetHandMesh(), FAttachmentTransformRules::KeepWorldTransform);
+		}
+
+		UGameplayStatics::SpawnSoundAttached(PickupSound, GetRootComponent());
 	}
 	
 	ReceiveOnBeginPickup(Hand);

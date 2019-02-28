@@ -39,9 +39,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Magazine")
 	UStaticMeshComponent* MagazineMesh;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon")
-	FName HandAttachSocket;
-
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Magazine")
 	int32 AmmoCount;
 

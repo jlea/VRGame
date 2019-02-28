@@ -20,8 +20,9 @@ AMagazine::AMagazine()
 	AmmoCount = 30;
 	CurrentAmmo = AmmoCount;
 
-	HandAttachSocket = TEXT("MagazineMountSocket");
+	HandAttachSocket = TEXT("Magazine");
 
+	bAttachToSocket = true;
 	bDropOnRelease = true;
 	bInteractable = true;
 
@@ -68,8 +69,6 @@ void AMagazine::OnBeginPickup(AHand* Hand)
 	}
 
 	Super::OnBeginPickup(Hand);
-
-	AttachToComponent(Hand->GetHandMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, HandAttachSocket);
 }
 
 void AMagazine::OnDrop(AHand* Hand)
