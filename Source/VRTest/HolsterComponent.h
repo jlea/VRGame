@@ -3,16 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/BoxComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "HolsterComponent.generated.h"
 
 class AInteractableActor;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FHolsterEventDelegate);
 
 /**
  * 
  */ 
 UCLASS(Blueprintable, BlueprintType, ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
-class VRTEST_API UHolsterComponent : public UBoxComponent
+class VRTEST_API UHolsterComponent : public UStaticMeshComponent
 {
 	GENERATED_BODY()
 
@@ -22,18 +24,14 @@ public:
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction) override;
 
 private:
-	UFUNCTION()
-	void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult);
-
-	UFUNCTION()
-	void OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
 	void HolsterActor(AInteractableActor* ActorToHolster);
 
 public:
-	UPROPERTY(BlueprintReadOnly)
-	TArray<AInteractableActor*>	HolsteredActors;
+	UPROPERTY(BlueprintAssignable)
+	FHolsterEventDelegate HolsterStateChanged;
 
 	UPROPERTY(BlueprintReadOnly)
 	TArray<AInteractableActor*>	ValidHoveredActors;
+
+	int32 LastValidActors;
 };

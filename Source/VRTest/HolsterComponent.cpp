@@ -8,11 +8,10 @@
 
 UHolsterComponent::UHolsterComponent()
 {
-	OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnBeginOverlap);
-	OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnEndOverlap);
-
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = true;
+
+	SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
 	bHiddenInGame = false;
 }
@@ -52,27 +51,15 @@ void UHolsterComponent::TickComponent(float DeltaTime, enum ELevelTick TickType,
 			continue;
 		}
 
-		FBox Box = InteractableActor->GetComponentsBoundingBox(false);
-
-		if (MyBounds.IsInside(Box))
-		{
-			ValidHoveredActors.Add(InteractableActor);
-			
-			DrawDebugBox(GetWorld(), Box.GetCenter(), Box.GetExtent(), FColor::Green, false, 0.1f, SDPG_World, 2.0f);
-		}
-		else
-		{
-			DrawDebugBox(GetWorld(), Box.GetCenter(), Box.GetExtent(), FColor::Red, false, 0.1f, SDPG_World, 2.0f);
-		}
+		ValidHoveredActors.Add(InteractableActor);
 	}
-}
 
-void UHolsterComponent::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult)
-{
-}
+	if (LastValidActors != ValidHoveredActors.Num())
+	{
+		HolsterStateChanged.Broadcast();
+	}
 
-void UHolsterComponent::OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
+	LastValidActors = ValidHoveredActors.Num();
 }
 
 void UHolsterComponent::HolsterActor(AInteractableActor* ActorToHolster)
