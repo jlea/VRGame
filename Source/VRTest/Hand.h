@@ -76,6 +76,9 @@ public:
 	void OnTeleportReleased();
 
 	UFUNCTION(BlueprintPure, Category = "Hand")
+	USphereComponent* GetSphereComponent() const { return SphereCollision; }
+
+	UFUNCTION(BlueprintPure, Category = "Hand")
 	USkeletalMeshComponent* GetHandMesh() const { return HandMesh; }
 
 	UFUNCTION(BlueprintPure, Category = "Player")
@@ -105,6 +108,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Hand")
 	FVector GetHandSelectionOrigin() const;
 
+	void ResetMeshToOrigin();
+
 private:
 	void TryTeleport();
 	void UpdateTeleport();
@@ -120,6 +125,8 @@ private:
 	UPROPERTY()
 	TArray<AInteractableActor*> NearbyActors;
 
+	FTransform CachedMeshTransform;
+
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Hand")
 	AInteractableActor* InteractingActor;
@@ -127,9 +134,6 @@ protected:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Hand")
 	UHapticFeedbackEffect_Base* GripEffect;
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Hand")
-	FName SelectionOriginSocket;
-	
 	//////////////////////////////////////////////////////////////////////////
 	//	Events
 public:

@@ -12,6 +12,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SphereComponent.h"
 #include "Weapons/Cartridge.h"
 #include "Components/BoxComponent.h"
 
@@ -21,10 +22,14 @@ AFirearm::AFirearm()
 	bHasSlidBack = false;
 	SlideStartSocket = TEXT("SlideStart");
 	SlideEndSocket = TEXT("SlideEnd");
+	SlideAttachSocket = TEXT("SlideAttach");
+	bSnapSlideForwardOnRelease = true;
+	SnapSlideSpeed = 3.0f;
 
 	bDropOnRelease = false; 
 	bAttachToSocket = true;
 
+	bOpenBolt = false;
 	bEjectRoundOnFire = true;
 
 	FirearmMesh = CreateDefaultSubobject<USkeletalMeshComponent>("HandMesh");
@@ -212,27 +217,37 @@ void AFirearm::Tick(float DeltaTime)
 		const float Ratio = 1.0f - (DistanceToStart / DistanceBetweenSockets);
 
 		SlideProgress = Ratio;
-
-		// Pumping it?
-		if (!bHasSlidBack)
+	}
+	else
+	{
+		if (bSnapSlideForwardOnRelease)
 		{
-			if (SlideProgress >= 1.0)
+			if (SlideProgress > 0.0f)
 			{
-				EjectRound();
-				OnSlideBack();
-
-				bHasSlidBack = true;
+				SlideProgress -= DeltaTime;
+				SlideProgress = FMath::Clamp(SlideProgress, 0.0f, 1.0f);
 			}
 		}
-		else
-		{
-			if (SlideProgress <= 0.0f)
-			{
-				bHasSlidBack = false;
+	}
 
-				LoadRoundFromMagazine();
-				OnSlideForward();
-			}
+	if (!bHasSlidBack)
+	{
+		if (SlideProgress >= 1.0)
+		{
+			EjectRound();
+			OnSlideBack();
+
+			bHasSlidBack = true;
+		}
+	}
+	else
+	{
+		if (SlideProgress <= 0.0f)
+		{
+			bHasSlidBack = false;
+
+			LoadRoundFromMagazine();
+			OnSlideForward();
 		}
 	}
 }
@@ -272,11 +287,32 @@ void AFirearm::OnBeginInteraction(AHand* Hand)
 		if (ChamberedRoundStatus == EChamberedRoundStatus::NoRound || ChamberedRoundStatus == EChamberedRoundStatus::Spent)
 		{
 			UGameplayStatics::PlaySoundAtLocation(this, DryFireSound, FirearmMesh->GetSocketLocation(MuzzleBone));
-			OnDryFire();
+
+			if (bOpenBolt && SlideProgress > 0.0f)
+			{
+				// Slide it forward
+				if (bHasSlidBack)
+				{
+					LoadRoundFromMagazine();
+					bHasSlidBack = false;
+				}
+
+				SlideProgress = 0.0f;
+				OnSlideForward();
+			}
+			else
+			{
+				OnDryFire();
+			}
+
 			return;
 		}
 
 		bTriggerDown = true;
+	}
+	else
+	{
+		Hand->GetHandMesh()->AttachToComponent(FirearmMesh, FAttachmentTransformRules::KeepWorldTransform, SlideAttachSocket);
 	}
 }
 
@@ -287,6 +323,10 @@ void AFirearm::OnEndInteraction(AHand* Hand)
 	if (Hand == AttachedHand)
 	{
 		bTriggerDown = false;
+	}
+	else
+	{
+		Hand->ResetMeshToOrigin();
 	}
 }
 
@@ -432,6 +472,13 @@ void AFirearm::Fire()
 	if (AmmoLoadType == EFirearmAmmoLoadType::Automatic || AmmoLoadType == EFirearmAmmoLoadType::SemiAutomatic)
 	{
 		LoadRoundFromMagazine();
+
+		// Ran out of ammo?
+		if (bOpenBolt && ChamberedRoundStatus == EChamberedRoundStatus::NoRound)
+		{
+			// Send it back to the front 
+			SlideProgress = 0.0f;
+		}
 	}
 
 	// Make some noise after we fire

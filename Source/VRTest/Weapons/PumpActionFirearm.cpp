@@ -8,10 +8,12 @@ APumpActionFirearm::APumpActionFirearm()
 {
 	bEjectRoundOnFire = false;
 	bHasInternalMagazine = true;
+	bSnapSlideForwardOnRelease = false;
 	AmmoLoadType = EFirearmAmmoLoadType::PumpAction;
 
 	SlideStartSocket = TEXT("PumpStart");
 	SlideEndSocket = TEXT("PumpEnd");
+	SlideAttachSocket = TEXT("PumpAttach");
 }
 
 void APumpActionFirearm::OnBeginInteraction(AHand* Hand)

@@ -29,8 +29,6 @@ AHand::AHand()
 	HandMesh->SetupAttachment(SphereCollision);
 
 	bWantsGrab = false;
-
-	SelectionOriginSocket = TEXT("SelectionOrigin");
 }
 
 // Called when the game starts or when spawned
@@ -44,6 +42,8 @@ void AHand::BeginPlay()
 	{
 		HandMesh->SetWorldScale3D(FVector(1.0f, 1.0f, -1.0f));
 	}
+
+	CachedMeshTransform = HandMesh->GetRelativeTransform();
 }
 
 APlayerController* AHand::GetPlayerController()
@@ -211,7 +211,13 @@ void AHand::UpdateNearbyActors()
 
 FVector AHand::GetHandSelectionOrigin() const
 {
-	return HandMesh->GetSocketLocation(SelectionOriginSocket);
+	return SphereCollision->GetComponentLocation();
+}
+
+void AHand::ResetMeshToOrigin()
+{
+	HandMesh->AttachToComponent(GetSphereComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	HandMesh->SetRelativeTransform(CachedMeshTransform);
 }
 
 void AHand::Grab(AInteractableActor* InteractableActor)
