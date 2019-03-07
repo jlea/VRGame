@@ -111,6 +111,7 @@ void AInteractableActor::OnBeginPickup(AHand* Hand)
 	auto RootPrimitive = Cast<UPrimitiveComponent>(RootComponent);
 	if (RootPrimitive)
 	{
+		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		RootPrimitive->SetSimulatePhysics(false);
 	
 		if (bAttachToSocket)
@@ -161,7 +162,10 @@ void AInteractableActor::OnDrop(AHand* Hand)
 	auto RootPrimitive = Cast<UPrimitiveComponent>(RootComponent);
 	if (RootPrimitive)
 	{
+		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		RootPrimitive->SetSimulatePhysics(true);
+
+		RootPrimitive->AddAngularImpulse(Hand->GetVelocity(), NAME_None, true);
 	}
 
 	// BP event

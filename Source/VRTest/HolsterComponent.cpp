@@ -70,6 +70,7 @@ void UHolsterComponent::HolsterActor(AInteractableActor* ActorToHolster)
 		return;
 	}
 
+	RootPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	RootPrimitive->SetSimulatePhysics(false);
 	
 	ActorToHolster->AttachToComponent(this, FAttachmentTransformRules::KeepWorldTransform);

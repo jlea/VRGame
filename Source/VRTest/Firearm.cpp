@@ -24,7 +24,7 @@ AFirearm::AFirearm()
 	SlideEndSocket = TEXT("SlideEnd");
 	SlideAttachSocket = TEXT("SlideAttach");
 	bSnapSlideForwardOnRelease = true;
-	SnapSlideSpeed = 3.0f;
+	SnapSlideSpeed = 30.0f;
 
 	bDropOnRelease = false; 
 	bAttachToSocket = true;
@@ -224,7 +224,7 @@ void AFirearm::Tick(float DeltaTime)
 		{
 			if (SlideProgress > 0.0f)
 			{
-				SlideProgress -= DeltaTime;
+				SlideProgress -= DeltaTime * SnapSlideSpeed;
 				SlideProgress = FMath::Clamp(SlideProgress, 0.0f, 1.0f);
 			}
 		}
@@ -450,8 +450,15 @@ void AFirearm::Fire()
 
 	for (int i = 0; i < BulletsPerShot; i++)
 	{
+		float MuzzleSpread = Spread;
+
+		if (AttachedCharacter)
+		{
+			MuzzleSpread = SpreadAI;
+		}
+
 		FVector SpawnLocation = MuzzleTransform.GetLocation();
-		FRotator SpawnRotation = MuzzleTransform.GetRotation().Rotator() + FRotator(FMath::RandRange(-Spread, Spread), FMath::RandRange(-Spread, Spread), 0.0f);
+		FRotator SpawnRotation = MuzzleTransform.GetRotation().Rotator() + FRotator(FMath::RandRange(-MuzzleSpread, MuzzleSpread), FMath::RandRange(-MuzzleSpread, MuzzleSpread), 0.0f);
 
 		auto Projectile = GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnLocation, SpawnRotation, SpawnParams);
 	}

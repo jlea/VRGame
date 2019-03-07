@@ -161,16 +161,16 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Pump Action")
 	FName SlideAttachSocket;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Pump Action")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Pump Action")
 	float SlideProgress;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Pump Action")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Pump Action")
 	bool bOpenBolt;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Pump Action")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Pump Action")
 	bool bSnapSlideForwardOnRelease;
 
-	UPROPERTY(BlueprintReadOnly, meta=(EditUsing=bSnapSlideForwardOnRelease), Category = "Pump Action")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta=(EditUsing=bSnapSlideForwardOnRelease), Category = "Pump Action")
 	float SnapSlideSpeed;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Mesh")
@@ -235,6 +235,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Gameplay")
 	float Spread;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Gameplay")
+	float SpreadAI;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Gameplay")
 	int32 BulletsPerShot;
