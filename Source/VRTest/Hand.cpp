@@ -264,6 +264,7 @@ void AHand::TryTeleport()
 	if (bHasValidTeleportLocation)
 	{
 		GetPlayerPawn()->SetActorLocation(ValidTeleportLocation);
+		GetPlayerPawn()->OnTeleported(ValidTeleportLocation);
 	}
 }
 

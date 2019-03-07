@@ -20,6 +20,9 @@ APlayerPawn::APlayerPawn()
 	VROrigin = CreateDefaultSubobject<USceneComponent>("VROrigin");
 	VROrigin->SetupAttachment(SceneRoot);
 
+	CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
+	CameraComponent->SetupAttachment(VROrigin);
+
 	ScopeCaptureComponent = CreateDefaultSubobject<USceneCaptureComponent2D>("ScopeRender");
 
 	MaxHealth = 500;
@@ -110,11 +113,7 @@ void APlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 FVector APlayerPawn::GetTargetLocation(AActor* RequestedBy /* = nullptr */) const
 {
-	FVector EyeLocation;
-	FRotator EyeRotation;
-
-	GetActorEyesViewPoint(EyeLocation, EyeRotation);
-	return EyeLocation;
+	return CameraComponent->GetComponentLocation();
 }
 
 void APlayerPawn::DropLeftPressed()

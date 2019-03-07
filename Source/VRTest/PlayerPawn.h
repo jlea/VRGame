@@ -59,8 +59,14 @@ public:
 	//////////////////////////////////////////////////////////////////////////
 	//	Misc
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Teleport")
+	void OnTeleported(const FVector Destination);
+
 	UFUNCTION(BlueprintCallable, Category = "VR")
 	void SetScopeFirearm(AFirearm* Firearm);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VR")
+	UCameraComponent* CameraComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VR")
 	USceneCaptureComponent2D* ScopeCaptureComponent;
