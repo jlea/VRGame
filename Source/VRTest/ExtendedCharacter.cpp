@@ -24,6 +24,7 @@ AExtendedCharacter::AExtendedCharacter()
 	SensingComponent->bOnlySensePlayers = false;
 
 	bPlayingDamageAnimation = false;
+	bHasRagdolled = false;
 
 	HeadshotMultiplier = 3.0f;
 	MaxHealth = 100;
@@ -140,11 +141,6 @@ void AExtendedCharacter::UpdateCharacterBodyTwist(float DeltaSeconds)
 
 bool AExtendedCharacter::ShouldTakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) const
 {
-	if (bDead)
-	{
-		return false;
-	}
-
 	return Super::ShouldTakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
 }
 
@@ -265,10 +261,23 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 							bPlayingDamageAnimation = true;
 
 							//Schedule the ragdoll
-							GetWorld()->GetTimerManager().SetTimer(TimerHandle_DamageAnimation, this, &AExtendedCharacter::FinishDamageAnimation, AnimDuration, false);
+							GetWorld()->GetTimerManager().SetTimer(TimerHandle_DamageAnimation, this, &ThisClass::FinishDamageAnimation, AnimDuration, false);
 						}
 					}
 				}
+			}
+		}
+	}
+	else
+	{
+		// Character is dead already, see if we can stop their ragdoll
+		if (!bHasRagdolled)
+		{	
+			CurrentHealth -= FinalDamage;
+
+			if (CurrentHealth <= -100.0f)
+			{
+				Ragdoll();
 			}
 		}
 	}
@@ -398,6 +407,8 @@ void AExtendedCharacter::Ragdoll()
 	GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->SetComponentTickEnabled(false);
+
+	bHasRagdolled = true;
 }
 
 void AExtendedCharacter::PlayDialogueSound(USoundCue* Sound)

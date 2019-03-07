@@ -157,6 +157,8 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Animation")
 	TArray<UAnimMontage*>	DeathAnimations;
 
+	bool bHasRagdolled;
+
 	//////////////////////////////////////////////////////////////////////////
 	//	AI
 
