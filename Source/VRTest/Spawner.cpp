@@ -77,11 +77,11 @@ void ASpawner::SpawnPawn()
 	}
 }
 
-void ASpawner::PawnKilled(AExtendedCharacter* Character, AController* Killer)
+void ASpawner::PawnKilled(AExtendedCharacter* Character, AController* Killer, const FHitResult& HitResult)
 {
 	NumKilled++;
 
-	OnPawnKilled(Character, Killer);
+	OnPawnKilled(Character, Killer, HitResult);
 
 	if (NumKilled == MaxSpawns)
 	{

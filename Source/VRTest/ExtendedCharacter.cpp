@@ -7,6 +7,7 @@
 #include "Components/AudioComponent.h"
 #include "DamageTypes/DamageType_Extended.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "VRGameState.h"
 #include "Engine/DecalActor.h"
 #include "Firearm.h"
 #include "DrawDebugHelpers.h"
@@ -41,6 +42,12 @@ void AExtendedCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	CurrentHealth = MaxHealth;
+
+	auto GameState = Cast<AVRGameState>(GetWorld()->GetGameState());
+	if (GameState)
+	{
+		GameState->AddSpawnedCharacter(this);
+	}
 }
 
 // Called every frame
@@ -384,7 +391,7 @@ void AExtendedCharacter::Kill(AController* Killer, AActor *DamageCauser, struct 
 	}
 
 	OnKilled(Killer, DamageCauser, DamageEvent);
-	OnKilledDelegate.Broadcast(this, Killer);
+	OnKilledDelegate.Broadcast(this, Killer, HitResult);
 
 	if (EquippedFirearm)
 	{

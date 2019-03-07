@@ -30,10 +30,10 @@ protected:
 	void SpawnPawn();
 
 	UFUNCTION()
-	void PawnKilled(AExtendedCharacter* Character, AController* Killer);
+	void PawnKilled(AExtendedCharacter* Character, AController* Killer, const FHitResult& HitResult);
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void OnPawnKilled(AExtendedCharacter* Character, AController* Killer);
+	void OnPawnKilled(AExtendedCharacter* Character, AController* Killer, const FHitResult& HitResult);
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnAllPawnsKilled();

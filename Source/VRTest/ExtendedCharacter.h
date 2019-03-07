@@ -13,7 +13,7 @@ class USoundCue;
 class AWeapon;
 class ADecalActor;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FCharacterKilledDelegate, AExtendedCharacter*, Character, AController*, Killer);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FCharacterKilledDelegate, AExtendedCharacter*, Character, AController*, Killer, const FHitResult&, HitEvent);
 
 UCLASS()
 class VRTEST_API AExtendedCharacter : public ACharacter

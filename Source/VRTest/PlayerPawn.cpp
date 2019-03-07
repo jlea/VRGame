@@ -30,10 +30,6 @@ APlayerPawn::APlayerPawn()
 	ScopeInterpSpeed = 5.0f;
 	CameraHeightOffset = 0.0f;
 
-	CurrentTimeDilation = 1.0f;
-	BulletTimeModifier = 0.35f;
-	BulletTimeInterpSpeed = 12.0f;
-
 	TeamId = FGenericTeamId(0);
 }
 
@@ -76,19 +72,6 @@ void APlayerPawn::Tick(float DeltaTime)
 
 		ScopeCaptureComponent->SetRelativeRotation(MuzzleRotation);
 	}
-
-	float TargetTimeDilation = 1.0f;
-	if (bBulletTime)
-	{
-		TargetTimeDilation = BulletTimeModifier;
-	}
-
-	if(CurrentTimeDilation != TargetTimeDilation)
-	{
-		CurrentTimeDilation = FMath::FInterpTo(CurrentTimeDilation, TargetTimeDilation, DeltaTime, BulletTimeInterpSpeed);
-
-		UGameplayStatics::SetGlobalTimeDilation(this, TargetTimeDilation);
-	}
 }
 
 // Called to bind functionality to input
@@ -107,8 +90,6 @@ void APlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 	InputComponent->BindAction("Teleport", IE_Pressed, this, &APlayerPawn::TeleportPressed);
 	InputComponent->BindAction("Teleport", IE_Released, this, &APlayerPawn::TeleportReleased);
-
-	InputComponent->BindAction("BulletTime", IE_Pressed, this, &APlayerPawn::BulletTimePressed);
 }
 
 FVector APlayerPawn::GetTargetLocation(AActor* RequestedBy /* = nullptr */) const
@@ -154,22 +135,6 @@ void APlayerPawn::TeleportPressed()
 void APlayerPawn::TeleportReleased()
 {
 	RightHand->OnTeleportReleased();
-}
-
-void APlayerPawn::BulletTimePressed()
-{
-	if (!bBulletTime)
-	{
-		bBulletTime = true;
-		OnBulletTimeBegin();
-		UGameplayStatics::SetGlobalPitchModulation(this, BulletTimeModifier, 1.5f);
-	}
-	else
-	{
-		bBulletTime = false;
-		OnBulletTimeFinish();
-		UGameplayStatics::SetGlobalPitchModulation(this, 1.0f, 1.5f);
-	}
 }
 
 void APlayerPawn::SetScopeFirearm(AFirearm* Firearm)
