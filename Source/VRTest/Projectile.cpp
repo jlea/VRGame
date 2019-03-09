@@ -55,12 +55,6 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimi
 		{
 			EffectActor->SurfaceHit = Hit;
 			UGameplayStatics::FinishSpawningActor(EffectActor, FTransform(Hit.ImpactNormal.Rotation(), Hit.ImpactPoint));
-// 			auto HitCharacter = Cast<A
-// 			
-// 			if (Character)
-// 			{
-// 				EffectActor->AttachToComponent(Character->GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, Hit.BoneName);
-// 			}
 		}
 	}
 

@@ -27,6 +27,7 @@ AExtendedCharacter::AExtendedCharacter()
 	bPlayingDamageAnimation = false;
 	bHasRagdolled = false;
 
+	HeadshotForceMultiplier = 10000.0f;
 	HeadshotMultiplier = 3.0f;
 	MaxHealth = 100;
 	bDead = false;
@@ -56,6 +57,11 @@ void AExtendedCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateCharacterBodyTwist(DeltaTime);
+}
+
+FVector AExtendedCharacter::GetTargetLocation(AActor* RequestedBy /* = nullptr */) const
+{
+	return GetMesh()->GetSocketLocation(HeadBone);
 }
 
 // Called to bind functionality to input
@@ -158,6 +164,8 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 
 	if (!bDead)
 	{
+		bool bHeadshot = false;
+
 		FHitResult HitResult;
 		if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
 		{
@@ -170,10 +178,24 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 				{
 					if (HitResult.BoneName == HeadBone)
 					{
-						FinalDamage *= HeadshotMultiplier;
+						bHeadshot = true;
 					}
 				}
 			}
+		}
+
+		if (bHeadshot)
+		{
+			if (HeadshotEffects.Num() > 0)
+			{
+				UParticleSystem* HeadshotEffect = HeadshotEffects[FMath::RandRange(0, HeadshotEffects.Num() - 1)];
+				if (HeadshotEffect)
+				{
+					UGameplayStatics::SpawnEmitterAttached(HeadshotEffect, GetMesh(), HeadBone, FVector::ZeroVector, FRotator(0,90.0f,0), EAttachLocation::SnapToTarget);
+				}
+			}
+
+			FinalDamage *= HeadshotMultiplier;
 		}
 
 		// Trace behind to find where our blood might spawn
@@ -189,24 +211,15 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 			const FVector TraceEnd = TraceStart + (DamageCauser->GetActorForwardVector() * BloodDecalMaxSprayDistance);
 			GetWorld()->LineTraceSingleByObjectType(BloodTrace, TraceStart, TraceEnd, ObjectQueryParams);
 
-			DrawDebugSphere(GetWorld(), TraceStart, 20.0f, 8, FColor::Red, false, 2.0f);
-			DrawDebugSphere(GetWorld(), TraceEnd, 20.0f, 8, FColor::Orange, false, 2.0f);
-
 			if (BloodTrace.IsValidBlockingHit())
 			{
 				FActorSpawnParameters SpawnParams;
 				SpawnParams.Owner = this;
 
 				const FVector SpawnLocation = BloodTrace.ImpactPoint;
-				const FRotator SpawnRotation = BloodTrace.ImpactNormal.Rotation() + FRotator(90.0f, 90.0f, 180.0f);
+				const FRotator SpawnRotation = BloodTrace.ImpactNormal.Rotation() + FRotator(90.0f, 0.0f, 180.0f);
 
 				GetWorld()->SpawnActor<ADecalActor>(BloodDecals[FMath::RandRange(0, BloodDecals.Num() - 1)], SpawnLocation, SpawnRotation, SpawnParams);
-
-				DrawDebugLine(GetWorld(), TraceStart, BloodTrace.ImpactPoint, FColor::Green, false, 2.0f);
-			}
-			else
-			{
-				DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Red, false, 2.0f);
 			}
 		}
 	
@@ -384,6 +397,11 @@ void AExtendedCharacter::Kill(AController* Killer, AActor *DamageCauser, struct 
 	if (ShouldRagdollOnDeath(HitResult))
 	{
 		Ragdoll();
+
+		if (bWasHeadshot)
+		{
+			GetMesh()->AddImpulse(DamageCauser->GetActorForwardVector() * HeadshotForceMultiplier, HeadBone);
+		}
 	}
 	else
 	{

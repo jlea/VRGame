@@ -32,6 +32,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual FVector GetTargetLocation(AActor* RequestedBy /* = nullptr */) const override;
+
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void GetActorEyesViewPoint(FVector& Location, FRotator& Rotation) const override;
@@ -106,16 +108,23 @@ public:
 	void OnSeverLimb(FHitResult Hit);
 
 	/** Effect to spawn when we kill something */
-	UPROPERTY(EditAnywhere, Category = Damage)
+	UPROPERTY(EditAnywhere, Category = "Damage FX")
 	UParticleSystem* BleedEffect;
+
+	/** Headshot effects */
+	UPROPERTY(EditAnywhere, Category = "Damage FX")
+	TArray<UParticleSystem*> HeadshotEffects;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Damage FX")
+	float HeadshotForceMultiplier;
 
 	UPROPERTY(BlueprintReadOnly, Category = Damage)
 	TArray<FName> SeveredLimbs;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = Damage)
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Damage FX")
 	TArray<TSubclassOf<ADecalActor>>	BloodDecals;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = Damage)
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Damage FX")
 	float BloodDecalMaxSprayDistance;
 
 	//////////////////////////////////////////////////////////////////////////
