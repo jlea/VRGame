@@ -199,7 +199,7 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 		}
 
 		// Trace behind to find where our blood might spawn
-		if (BloodDecals.Num() > 0)
+		if (BloodDecal)
 		{
 			FHitResult BloodTrace;
 			FCollisionObjectQueryParams ObjectQueryParams;
@@ -219,7 +219,14 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 				const FVector SpawnLocation = BloodTrace.ImpactPoint;
 				const FRotator SpawnRotation = BloodTrace.ImpactNormal.Rotation() + FRotator(90.0f, 0.0f, 180.0f);
 
-				GetWorld()->SpawnActor<ADecalActor>(BloodDecals[FMath::RandRange(0, BloodDecals.Num() - 1)], SpawnLocation, SpawnRotation, SpawnParams);
+				if(bHeadshot)
+				{
+					GetWorld()->SpawnActor<ADecalActor>(HeadshotDecal, SpawnLocation, SpawnRotation, SpawnParams);
+				}
+				else
+				{
+					GetWorld()->SpawnActor<ADecalActor>(BloodDecal, SpawnLocation, SpawnRotation, SpawnParams);
+				}
 			}
 		}
 	

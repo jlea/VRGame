@@ -122,7 +122,10 @@ public:
 	TArray<FName> SeveredLimbs;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Damage FX")
-	TArray<TSubclassOf<ADecalActor>>	BloodDecals;
+	TSubclassOf<ADecalActor>	BloodDecal;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Damage FX")
+	TSubclassOf<ADecalActor>	HeadshotDecal;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Damage FX")
 	float BloodDecalMaxSprayDistance;
