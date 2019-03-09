@@ -87,6 +87,18 @@ void ACharacterAIController::Tick(float DeltaTime)
 					Firearm->bTriggerDown = false;
 				}
 			}
+			else if (Firearm->AmmoLoadType == EFirearmAmmoLoadType::Automatic)
+			{
+				const bool bCanFire = DotToTarget > 0.9f && !Me->bPlayingDamageAnimation;
+				if (bShouldFire && bCanFire)
+				{
+					Firearm->bTriggerDown = true;
+				}
+				else
+				{
+					Firearm->bTriggerDown = false;
+				}
+			}
 		}
 	}
 }
