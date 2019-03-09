@@ -62,9 +62,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bullet Time")
 	float BulletTimeModifier;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bullet Time")
+	float BulletTimeDuration;
+
 	UFUNCTION()
 	void FinishBulletTime();
 
 	UPROPERTY()
 	FTimerHandle TimerHandle_BulletTime;
+
+	int32 NumDeadCharacters;
 };

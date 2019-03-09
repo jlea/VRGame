@@ -7,9 +7,13 @@
 AVRGameState::AVRGameState()
 {
 	CurrentTimeDilation = 1.0f;
-	BulletTimeModifier = 0.35f;
-	BulletTimeInterpSpeed = 12.0f;
+	BulletTimeModifier = 0.2f;
+	BulletTimeInterpSpeed = 8.0f;
+	BulletTimeDuration = 2.0f;
+	NumDeadCharacters = 0;
 	bBulletTime = false;
+
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 void AVRGameState::Tick(float DeltaSeconds)
@@ -27,7 +31,7 @@ void AVRGameState::Tick(float DeltaSeconds)
 		CurrentTimeDilation = FMath::FInterpTo(CurrentTimeDilation, TargetTimeDilation, DeltaSeconds, BulletTimeInterpSpeed);
 
 		UGameplayStatics::SetGlobalPitchModulation(this, TargetTimeDilation, 1.0f);
-		UGameplayStatics::SetGlobalTimeDilation(this, TargetTimeDilation);
+		UGameplayStatics::SetGlobalTimeDilation(this, CurrentTimeDilation);
 	}
 }
 
@@ -43,14 +47,22 @@ void AVRGameState::TriggerBulletTime(float Duration)
 	UGameplayStatics::SetGlobalPitchModulation(this, BulletTimeModifier, 1.0f);
 	bBulletTime = true;
 
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_BulletTime, this, &ThisClass::FinishBulletTime, Duration);
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle_BulletTime, this, &ThisClass::FinishBulletTime, Duration * BulletTimeModifier);
 }
 
 void AVRGameState::OnCharacterKilled(AExtendedCharacter* Character, AController* Killer, const FHitResult& HitEvent)
 {
-	if (HitEvent.BoneName == Character->HeadBone)
+ 	if (HitEvent.BoneName == Character->HeadBone)
+ 	{
+		TriggerBulletTime(BulletTimeDuration);
+ 	}
+
+	NumDeadCharacters++;
+
+	// Killed the last character
+	if (NumDeadCharacters == SpawnedCharacters.Num())
 	{
-		
+		TriggerBulletTime(BulletTimeDuration);
 	}
 }
 
