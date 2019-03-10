@@ -106,12 +106,10 @@ void AInteractableActor::OnBeginPickup(AHand* Hand)
 
 	AttachedHand = Hand;
 
-	GEngine->AddOnScreenDebugMessage(1, 2.0f, FColor::Green, FString::Printf(TEXT("%s: Picking up"), *GetName()), true, FVector2D(3.0f, 3.0f));
-
 	auto RootPrimitive = Cast<UPrimitiveComponent>(RootComponent);
 	if (RootPrimitive)
 	{
-		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		RootPrimitive->SetSimulatePhysics(false);
 	
 		if (bAttachToSocket)
@@ -164,8 +162,6 @@ void AInteractableActor::OnDrop(AHand* Hand)
 	{
 		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		RootPrimitive->SetSimulatePhysics(true);
-
-		RootPrimitive->AddAngularImpulse(Hand->GetVelocity(), NAME_None, true);
 	}
 
 	// BP event
