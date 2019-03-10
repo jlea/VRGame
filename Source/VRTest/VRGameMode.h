@@ -6,6 +6,9 @@
 #include "GameFramework/GameModeBase.h"
 #include "VRGameMode.generated.h"
 
+class AExtendedCharacter;
+class ASpawner;
+
 /**
  * 
  */
@@ -15,9 +18,15 @@ class VRTEST_API AVRGameMode : public AGameModeBase
 	GENERATED_BODY()
 
 	AVRGameMode();
-	
+
+public:
+	virtual void ResetLevel() override;
+
 	void SpawnWave();
 
 	UPROPERTY()
 	TArray<APawn*>	SpawnedEnemies;
+
+	UPROPERTY()
+	TArray<ASpawner*>	Spawners;
 };

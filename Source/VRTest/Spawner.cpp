@@ -18,6 +18,24 @@ ASpawner::ASpawner()
 	TeamId = 1;
 }
 
+void ASpawner::Reset()
+{
+	NumSpawned = 0;
+	NumKilled = 0;
+
+	for (auto SpawnedPawn : SpawnedPawns)
+	{
+		if (!SpawnedPawn)
+		{
+			continue;
+		}
+
+		SpawnedPawn->Destroy();
+	}
+
+	SpawnedPawns.Empty();
+}
+
 void ASpawner::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);

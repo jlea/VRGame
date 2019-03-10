@@ -18,6 +18,8 @@ public:
 	// Sets default values for this actor's properties
 	ASpawner();
 
+	virtual void Reset() override;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void OnConstruction(const FTransform& Transform) override;
