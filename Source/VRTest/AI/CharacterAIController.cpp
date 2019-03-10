@@ -244,6 +244,18 @@ void ACharacterAIController::DoVisibilityCheck()
 {
 	if (GetTargetPawn())
 	{
+		FVector ViewPoint = FVector(ForceInit);
+		auto Me = Cast<AExtendedCharacter>(GetPawn());
+		if (Me)
+		{
+			auto Firearm = Me->EquippedFirearm;
+			if (Firearm)
+			{
+				FTransform MuzzleTransform = Firearm->FirearmMesh->GetSocketTransform(Firearm->MuzzleBone);
+				ViewPoint = MuzzleTransform.GetLocation();
+			}
+		}
+
 		if (LineOfSightTo(GetTargetPawn()))
 		{
 			SetLOSToTarget(true);
@@ -312,6 +324,9 @@ void ACharacterAIController::SetNewEnemy(APawn* NewEnemy)
 	//Set our new target
 	FAITargetMemory NewMemory;
 	NewMemory.TargetPawn = NewEnemy;
+	NewMemory.LastSeenPosition = NewEnemy->GetActorLocation();
+	NewMemory.LastSeenVelocity = NewEnemy->GetVelocity();
+	NewMemory.LastSeenTimestamp = GetWorld()->GetTimeSeconds();
 
 	TargetMemory = NewMemory;
 
@@ -361,6 +376,22 @@ int32 ACharacterAIController::GetPriorityForTarget(APawn* Target)
 
 void ACharacterAIController::OnHearNoise(APawn *OtherActor, const FVector &Location, float Volume)
 {
+	auto Player = Cast<APlayerPawn>(OtherActor);
+	if (!Player)
+	{
+		return;
+	}
+
+// 	if (!TargetMemory.TargetPawn || !TargetMemory.bIsAlive)
+// 	{
+// 		SetFocalPoint(Location);
+// 	}
+
+	if (ShouldSetAsEnemy(Player))
+	{
+		SetNewEnemy(Player);
+	}
+
 // 	AFPSCharacter* CharacterEmitter = Cast<AFPSCharacter>(OtherActor);
 // 	if (IsTeamMate(CharacterEmitter))
 // 	{
