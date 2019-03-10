@@ -9,7 +9,7 @@ AVRGameState::AVRGameState()
 	CurrentTimeDilation = 1.0f;
 	BulletTimeModifier = 0.2f;
 	BulletTimeInterpSpeed = 8.0f;
-	BulletTimeDuration = 2.0f;
+	BulletTimeDuration = 3.0f;
 	NumDeadCharacters = 0;
 	bBulletTime = false;
 
@@ -52,11 +52,14 @@ void AVRGameState::TriggerBulletTime(float Duration)
 
 void AVRGameState::OnCharacterKilled(AExtendedCharacter* Character, AController* Killer, const FHitResult& HitEvent)
 {
- 	if (HitEvent.BoneName == Character->HeadBone)
- 	{
-		TriggerBulletTime(BulletTimeDuration);
- 	}
-
+	if (false)
+	{
+		if (HitEvent.BoneName == Character->HeadBone)
+		{
+			TriggerBulletTime(BulletTimeDuration);
+		}
+	}
+ 	
 	NumDeadCharacters++;
 
 	// Killed the last character
