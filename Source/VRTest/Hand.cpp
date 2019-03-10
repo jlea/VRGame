@@ -153,13 +153,17 @@ void AHand::UpdateNearbyActors()
 		return;
 	}
 
+	AInteractableActor*	OldNearbyActor = ClosestNearbyActor;
+
+	FlushPersistentDebugLines(GetWorld());
+
 	NearbyActors.Empty();
 
 	const float SearchDistance = SphereCollision->GetScaledSphereRadius();
 	const FVector HandLocation = GetHandSelectionOrigin();
 
 	EInteractPriority BestPriority = EInteractPriority::Low;
-	float ClosestActorDistance = FLT_MAX;
+	float ClosestActorValue = FLT_MAX;
 	AInteractableActor* ClosestActor = nullptr;
 	
 	for (auto Actor : VRGameState->GetInteractableActors())
@@ -179,7 +183,6 @@ void AHand::UpdateNearbyActors()
 			continue;
 		}
 
-
 		NearbyActors.Add(Actor);
 
 		if (Actor->InteractPriority < BestPriority)
@@ -187,26 +190,40 @@ void AHand::UpdateNearbyActors()
 			continue;
 		}
 
+		const FVector DirectionToActor = (Actor->GetActorLocation() - HandLocation).GetSafeNormal();
+		float DistanceToActor = (Actor->GetActorLocation() - HandLocation).Size();
+
+		const float DotProduct = FVector::DotProduct(GetActorForwardVector(), DirectionToActor);
+
 		// Higher priority, use this
-		const float DistanceToActor = FVector::Dist(Actor->GetActorLocation(), HandLocation);
 		if (Actor->InteractPriority > BestPriority)
 		{
 			BestPriority = Actor->InteractPriority;
 
 			ClosestActor = Actor;
-			ClosestActorDistance = ClosestActorDistance;
+			ClosestActorValue = DistanceToActor;
 		}
 		else
 		{
-			if (DistanceToActor < ClosestActorDistance)
+			if (DistanceToActor < ClosestActorValue)
 			{
 				ClosestActor = Actor;
-				ClosestActorDistance = ClosestActorDistance;
+				ClosestActorValue = DistanceToActor;
 			}
 		}
 	}
 
+	if (ClosestNearbyActor && !InteractingActor)
+	{
+		DrawDebugSphere(GetWorld(), ClosestNearbyActor->GetActorLocation(), 2.0f, 16, FColor::Green, true, 0.1f, SDPG_World, 1.0f);
+	}
+
 	ClosestNearbyActor = ClosestActor;
+
+	if (ClosestNearbyActor != OldNearbyActor)
+	{
+		OnHoverActorChanged(ClosestNearbyActor);
+	}
 }
 
 FVector AHand::GetHandSelectionOrigin() const

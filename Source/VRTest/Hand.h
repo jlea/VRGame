@@ -137,6 +137,8 @@ protected:
 	//////////////////////////////////////////////////////////////////////////
 	//	Events
 public:
+	UFUNCTION(BlueprintImplementableEvent, Category = "Hand")
+	void OnHoverActorChanged(AInteractableActor* NewActor);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Hand")
 	void ReceiveOnReleaseHeldActor(AInteractableActor* OldHeldActor);
