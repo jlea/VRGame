@@ -169,6 +169,8 @@ void APlayerPawn::Kill(AController* Killer, AActor *DamageCauser, struct FDamage
 {
 	bDead = true;
 
+	OnKilled(Killer, DamageCauser, DamageEvent);
+
 	DeathTimestamp = GetWorld()->GetTimeSeconds();
 }
 
