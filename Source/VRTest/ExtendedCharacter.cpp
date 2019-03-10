@@ -243,33 +243,43 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 
 				// See which direction our shot is attack from
 				const FVector AttackDir = (HitResult.TraceEnd - HitResult.TraceStart).GetSafeNormal();
-				const FRotator RotationDelta = (AttackDir.Rotation() - GetMesh()->GetComponentRotation()).GetNormalized();
+				const FVector ImpactDir = -AttackDir;
+				const FRotator RotationDelta = (ImpactDir.Rotation() - GetMesh()->GetComponentRotation()).GetNormalized();
 
 				if (EquippedFirearm)
 				{
 					const float YawThreshold = 30.0f;
+					const float BackAttackThreshold = 90.0f;
 
-					FQuat BetweenQuat = FQuat::FindBetweenVectors(AttackDir, GetMesh()->GetForwardVector());
+					const bool bCenterAttack = FMath::Abs(RotationDelta.Yaw) < YawThreshold;
+					const bool bBackAttack = FMath::Abs(RotationDelta.Yaw) >= BackAttackThreshold;
+					const bool bLeftAttack = RotationDelta.Yaw >= YawThreshold && RotationDelta.Yaw < BackAttackThreshold;
+					const bool bRightAttack = RotationDelta.Yaw <= -YawThreshold && RotationDelta.Yaw > -BackAttackThreshold;
 
 					TArray<FDamageAnimation>	ValidDamageAnimations;
 					for (auto DamageAnimation : EquippedFirearm->DamageAnimations)
 					{
 						switch (DamageAnimation.DamageDirection)
 						{
+						case EDamageDirection::Back:
+							if (bBackAttack)
+							{
+								ValidDamageAnimations.Add(DamageAnimation);
+							}
 						case EDamageDirection::Front:
-							if (FMath::Abs(RotationDelta.Yaw) < YawThreshold)
+							if (bCenterAttack)
 							{
 								ValidDamageAnimations.Add(DamageAnimation);
 							}
 							break;
 						case EDamageDirection::Left:
-							if (RotationDelta.Yaw < YawThreshold)
+							if (bLeftAttack)
 							{
 								ValidDamageAnimations.Add(DamageAnimation);
 							}
 							break;
 						case EDamageDirection::Right:
-							if (RotationDelta.Yaw > YawThreshold)
+							if (bRightAttack)
 							{
 								ValidDamageAnimations.Add(DamageAnimation);
 							}
@@ -336,8 +346,13 @@ void AExtendedCharacter::PlayDeathAnimation()
 	}
 }
 
-bool AExtendedCharacter::ShouldRagdollOnDeath(FHitResult Hit)
+bool AExtendedCharacter::ShouldRagdollOnDeath(FHitResult Hit, UDamageType_Extended* DamageType)
 {
+	if (DamageType && DamageType->bForceRagdoll)
+	{
+		return true;
+	}
+
 	if (!HeadBone.IsNone())
 	{
 		if (Hit.BoneName == HeadBone)
@@ -365,7 +380,10 @@ void AExtendedCharacter::Kill(AController* Killer, AActor *DamageCauser, struct 
 		DamageType = Cast<UDamageType_Extended>(DamageEvent.DamageTypeClass.GetDefaultObject());
 	}
 
-	GetController()->UnPossess();
+	if (GetController())
+	{
+		GetController()->UnPossess();
+	}
 
 	FHitResult HitResult;
 	bool bWasHeadshot = false;
@@ -401,7 +419,7 @@ void AExtendedCharacter::Kill(AController* Killer, AActor *DamageCauser, struct 
 		PlayDialogueSound(DeathSound);
 	}
 
-	if (ShouldRagdollOnDeath(HitResult))
+	if (ShouldRagdollOnDeath(HitResult, DamageType))
 	{
 		Ragdoll();
 

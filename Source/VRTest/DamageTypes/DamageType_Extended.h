@@ -13,7 +13,12 @@ class UDamageType_Extended : public UDamageType
 {
 	GENERATED_BODY()
 
+	UDamageType_Extended();
+
 public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 	bool bSeverLimbs;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	bool bForceRagdoll;
 };

@@ -7,6 +7,7 @@
 #include "GenericTeamAgentInterface.h"
 #include "ExtendedCharacter.generated.h"
 
+class UDamageType_Extended;
 class UPawnSensingComponent;
 class AFirearm;
 class USoundCue;
@@ -45,7 +46,7 @@ public:
 	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 	virtual void PlayDeathAnimation();
-	virtual bool ShouldRagdollOnDeath(FHitResult Hit);
+	virtual bool ShouldRagdollOnDeath(FHitResult Hit, UDamageType_Extended* DamageType);
 
 	UFUNCTION(BlueprintCallable, Category = "Character")
 	void Kill(AController* Killer, AActor *DamageCauser, struct FDamageEvent const& DamageEvent);

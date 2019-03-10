@@ -5,3 +5,8 @@
 
 
 
+UDamageType_Extended::UDamageType_Extended()
+{
+	bSeverLimbs = false;
+	bForceRagdoll = false;
+}
