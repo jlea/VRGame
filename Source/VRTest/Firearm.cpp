@@ -312,7 +312,7 @@ void AFirearm::OnBeginInteraction(AHand* Hand)
 	}
 	else
 	{
-		Hand->GetHandMesh()->AttachToComponent(FirearmMesh, FAttachmentTransformRules::KeepWorldTransform, SlideAttachSocket);
+		//Hand->GetHandMesh()->AttachToComponent(FirearmMesh, FAttachmentTransformRules::KeepWorldTransform, SlideAttachSocket);
 	}
 }
 
@@ -326,7 +326,7 @@ void AFirearm::OnEndInteraction(AHand* Hand)
 	}
 	else
 	{
-		Hand->ResetMeshToOrigin();
+		//Hand->ResetMeshToOrigin();
 	}
 }
 
@@ -447,6 +447,7 @@ void AFirearm::Fire()
 
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = this;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	for (int i = 0; i < BulletsPerShot; i++)
 	{
@@ -461,6 +462,10 @@ void AFirearm::Fire()
 		FRotator SpawnRotation = MuzzleTransform.GetRotation().Rotator() + FRotator(FMath::RandRange(-MuzzleSpread, MuzzleSpread), FMath::RandRange(-MuzzleSpread, MuzzleSpread), 0.0f);
 
 		auto Projectile = GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnLocation, SpawnRotation, SpawnParams);
+		if (Projectile)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("projectile"));
+		}
 	}
 
 	LastFireTime = GetWorld()->GetTimeSeconds();
