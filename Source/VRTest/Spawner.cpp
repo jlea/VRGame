@@ -91,6 +91,7 @@ void ASpawner::SpawnPawn()
 		}
 
 		SpawnedPawns.Add(SpawnedCharacter);
+
 		NumSpawned++;
 	}
 }
@@ -100,10 +101,12 @@ void ASpawner::PawnKilled(AExtendedCharacter* Character, AController* Killer, co
 	NumKilled++;
 
 	OnPawnKilled(Character, Killer, HitResult);
+	OnPawnKilledDelegate.Broadcast(this, Character, Killer, HitResult);
 
 	if (NumKilled == MaxSpawns)
 	{
 		OnAllPawnsKilled();
+		OnAllPawnsKilledDelegate.Broadcast(this);
 	}
 	else
 	{

@@ -9,6 +9,9 @@
 class AExtendedCharacter;
 class USkeletalMeshComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FSpawnerKilledEvent, ASpawner*, Spawner, AExtendedCharacter*, Character, AController*, Killer, const FHitResult&, HitResult);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSpawnerAllKilledEvent, ASpawner*, Spawner);
+
 UCLASS()
 class VRTEST_API ASpawner : public AActor
 {
@@ -19,7 +22,6 @@ public:
 	ASpawner();
 
 	virtual void Reset() override;
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void OnConstruction(const FTransform& Transform) override;
@@ -66,4 +68,11 @@ protected:
 
 	UPROPERTY()
 	FTimerHandle TimerHandle_SpawnPawn;
+public:
+
+	UPROPERTY(BlueprintAssignable)
+	FSpawnerKilledEvent OnPawnKilledDelegate;
+
+	UPROPERTY(BlueprintAssignable)
+	FSpawnerAllKilledEvent OnAllPawnsKilledDelegate;
 };

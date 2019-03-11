@@ -18,11 +18,27 @@ AVRGameMode::AVRGameMode()
 void AVRGameMode::ResetLevel()
 {
 	Super::ResetLevel();
+}
 
-	Spawners.Empty();
+void AVRGameMode::BeginPlay()
+{
+	Super::BeginPlay();
 
 	for (TActorIterator<ASpawner> ActorItr(GetWorld()); ActorItr; ++ActorItr)
 	{
+		ActorItr->OnAllPawnsKilledDelegate.AddDynamic(this, &ThisClass::OnAllPawnsKilledForSpawner);
+		ActorItr->OnPawnKilledDelegate.AddDynamic(this, &ThisClass::OnPawnKilledForSpawner);
+
 		Spawners.Add(*ActorItr);
 	}
+}
+
+void AVRGameMode::OnAllPawnsKilledForSpawner(ASpawner* Spawner)
+{
+
+}
+
+void AVRGameMode::OnPawnKilledForSpawner(ASpawner* Spawner, AExtendedCharacter* Pawn, AController* Killer, const FHitResult& HitResult)
+{
+
 }

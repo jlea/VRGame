@@ -21,12 +21,24 @@ class VRTEST_API AVRGameMode : public AGameModeBase
 
 public:
 	virtual void ResetLevel() override;
+	virtual void BeginPlay() override;
 
 	void SpawnWave();
+
+	UFUNCTION()
+	void OnAllPawnsKilledForSpawner(ASpawner* Spawner);
+
+	UFUNCTION()
+	void OnPawnKilledForSpawner(ASpawner* Spawner, AExtendedCharacter* Pawn, AController* Killer, const FHitResult& HitResult);
 
 	UPROPERTY()
 	TArray<APawn*>	SpawnedEnemies;
 
 	UPROPERTY()
 	TArray<ASpawner*>	Spawners;
+
+	//////////////////////////////////////////////////////////////////////////
+	//	Wave based
+protected:
+	void OnWaveFinished();
 };
