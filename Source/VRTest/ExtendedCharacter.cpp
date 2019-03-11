@@ -216,16 +216,19 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 				FActorSpawnParameters SpawnParams;
 				SpawnParams.Owner = this;
 
+				FRotator RandomDecalRotation = BloodTrace.ImpactNormal.Rotation().GetInverse();
+				RandomDecalRotation.Add(-90.0f, 0.0f, 0.0f);
+				//RandomDecalRotation.Yaw += 90.0f;
+
 				const FVector SpawnLocation = BloodTrace.ImpactPoint;
-				const FRotator SpawnRotation = BloodTrace.ImpactNormal.Rotation() + FRotator(90.0f, 0.0f, 180.0f);
 
 				if(bHeadshot)
 				{
-					GetWorld()->SpawnActor<ADecalActor>(HeadshotDecal, SpawnLocation, SpawnRotation, SpawnParams);
+					GetWorld()->SpawnActor<ADecalActor>(HeadshotDecal, SpawnLocation, RandomDecalRotation, SpawnParams);
 				}
 				else
 				{
-					GetWorld()->SpawnActor<ADecalActor>(BloodDecal, SpawnLocation, SpawnRotation, SpawnParams);
+					GetWorld()->SpawnActor<ADecalActor>(BloodDecal, SpawnLocation, RandomDecalRotation, SpawnParams);
 				}
 			}
 		}
