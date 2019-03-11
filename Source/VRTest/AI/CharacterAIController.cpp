@@ -324,9 +324,13 @@ void ACharacterAIController::SetNewEnemy(APawn* NewEnemy)
 	//Set our new target
 	FAITargetMemory NewMemory;
 	NewMemory.TargetPawn = NewEnemy;
-	NewMemory.LastSeenPosition = NewEnemy->GetActorLocation();
-	NewMemory.LastSeenVelocity = NewEnemy->GetVelocity();
-	NewMemory.LastSeenTimestamp = GetWorld()->GetTimeSeconds();
+
+	if (NewEnemy)
+	{
+		NewMemory.LastSeenPosition = NewEnemy->GetActorLocation();
+		NewMemory.LastSeenVelocity = NewEnemy->GetVelocity();
+		NewMemory.LastSeenTimestamp = GetWorld()->GetTimeSeconds();
+	}
 
 	TargetMemory = NewMemory;
 
