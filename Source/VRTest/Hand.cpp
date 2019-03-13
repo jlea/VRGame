@@ -8,6 +8,7 @@
 #include "DrawDebugHelpers.h"
 #include "VRGameState.h"
 #include "Engine.h"
+#include "World/TeleportDestination.h"
 #include "InteractableActor.h"
 
 // Sets default values
@@ -27,6 +28,8 @@ AHand::AHand()
 
 	HandMesh = CreateDefaultSubobject<USkeletalMeshComponent>("HandMesh");
 	HandMesh->SetupAttachment(SphereCollision);
+
+	bUseProjectileTeleport = false;
 
 	bWantsGrab = false;
 }
@@ -155,8 +158,6 @@ void AHand::UpdateNearbyActors()
 
 	AInteractableActor*	OldNearbyActor = ClosestNearbyActor;
 
-	FlushPersistentDebugLines(GetWorld());
-
 	NearbyActors.Empty();
 
 	const float SearchDistance = SphereCollision->GetScaledSphereRadius();
@@ -280,8 +281,19 @@ void AHand::TryTeleport()
 {
 	if (bHasValidTeleportLocation)
 	{
-		GetPlayerPawn()->SetActorLocation(ValidTeleportLocation);
-		GetPlayerPawn()->OnTeleported(ValidTeleportLocation);
+		if (bUseProjectileTeleport)
+		{
+			GetPlayerPawn()->SetActorLocation(ValidTeleportLocation);
+			GetPlayerPawn()->OnTeleported(ValidTeleportLocation);
+		}
+		else
+		{
+			auto TeleportDestination = Cast<ATeleportDestination>(TeleportLineTrace.GetActor());
+			if (TeleportDestination)
+			{
+				TeleportDestination->TeleportToDestination(GetPlayerPawn(), this);
+			}
+		}
 	}
 }
 
@@ -296,24 +308,57 @@ void AHand::UpdateTeleport()
 	ActorsToIgnore.Add(GetPlayerPawn());
 	ActorsToIgnore.Add(InteractingActor);
 
-	FPredictProjectilePathParams TeleportParams;
-	TeleportParams.ProjectileRadius = 2.0f;
-	TeleportParams.StartLocation = SphereCollision->GetComponentLocation();
-	TeleportParams.bTraceWithChannel = true;
-	TeleportParams.bTraceWithCollision = true;
-	TeleportParams.TraceChannel = ECC_Visibility;
-	TeleportParams.DrawDebugType = EDrawDebugTrace::ForOneFrame;
-	TeleportParams.LaunchVelocity = SphereCollision->GetForwardVector() * TeleportProjectileVelocity;
-	TeleportParams.ActorsToIgnore = ActorsToIgnore;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActors(ActorsToIgnore);
 
-	UGameplayStatics::PredictProjectilePath(this, TeleportParams, TeleportResult);
-	
-	// Now trace downwards
-	FHitResult PostTraceHit;
-	GetWorld()->LineTraceSingleByChannel(PostTraceHit, TeleportResult.LastTraceDestination.Location, (TeleportResult.LastTraceDestination.Location + FVector::UpVector * 100.0f), ECC_Visibility);
-	if (PostTraceHit.IsValidBlockingHit())
+	if(bUseProjectileTeleport)
 	{
-		bHasValidTeleportLocation = true;
-		ValidTeleportLocation = PostTraceHit.ImpactPoint;
+		FPredictProjectilePathParams TeleportParams;
+		TeleportParams.ProjectileRadius = 2.0f;
+		TeleportParams.StartLocation = SphereCollision->GetComponentLocation();
+		TeleportParams.bTraceWithChannel = true;
+		TeleportParams.bTraceWithCollision = true;
+		TeleportParams.TraceChannel = ECC_Visibility;
+		TeleportParams.DrawDebugType = EDrawDebugTrace::ForOneFrame;
+		TeleportParams.LaunchVelocity = SphereCollision->GetForwardVector() * TeleportProjectileVelocity;
+		TeleportParams.ActorsToIgnore = ActorsToIgnore;
+
+		UGameplayStatics::PredictProjectilePath(this, TeleportParams, TeleportResult);
+
+		// Now trace downwards
+		FHitResult PostTraceHit;
+		GetWorld()->LineTraceSingleByChannel(PostTraceHit, TeleportResult.LastTraceDestination.Location, (TeleportResult.LastTraceDestination.Location + FVector::UpVector * -1000.0f), ECC_Visibility);
+		if (PostTraceHit.IsValidBlockingHit())
+		{
+			bHasValidTeleportLocation = true;
+			ValidTeleportLocation = PostTraceHit.ImpactPoint;
+		}
+	}
+	else
+	{
+		// Do a line trace, see if in interacts with our teleport destination
+		const FVector TraceStart = SphereCollision->GetComponentLocation();
+		const FVector TraceEnd = TraceStart + SphereCollision->GetForwardVector() * 100000.0f;
+
+		GetWorld()->LineTraceSingleByChannel(TeleportLineTrace, TraceStart, TraceEnd, ECC_GameTraceChannel4, CollisionParams);
+
+		if (TeleportLineTrace.IsValidBlockingHit())
+		{
+			auto TeleportDestination = Cast<ATeleportDestination>(TeleportLineTrace.GetActor());
+			if (TeleportDestination)
+			{
+				bHasValidTeleportLocation = true;
+			}
+			else
+			{
+				bHasValidTeleportLocation = false;
+			}
+		}
+		else
+		{
+			bHasValidTeleportLocation = false;
+		}
+		
+		//DrawDebugLine(GetWorld(), TraceStart, TeleportLineTrace.IsValidBlockingHit() ? TeleportLineTrace.ImpactPoint : TeleportLineTrace.TraceEnd, TeleportLineTrace.IsValidBlockingHit() ? FColor::Green : FColor::Red, false, 0.2f, SDPG_World, 1.0f);
 	}
 }

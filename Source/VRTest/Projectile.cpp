@@ -34,7 +34,7 @@ AProjectile::AProjectile()
 void AProjectile::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	CollisionSphere->IgnoreActorWhenMoving(GetOwner(), true);
 
 	SetLifeSpan(5.0f);

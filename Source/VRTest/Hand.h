@@ -43,14 +43,20 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Teleport")
 	FPredictProjectilePathResult TeleportResult;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Teleport")
-	FVector ValidTeleportLocation;
-	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Teleport")
+	bool bUseProjectileTeleport;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Teleport")
 	bool bHasValidTeleportLocation;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Teleport")
+	UPROPERTY(BlueprintReadOnly, Category = "Teleport", meta = (EditCondition = bUseProjectileTeleport))
+	FVector ValidTeleportLocation;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Teleport", meta=(EditCondition = bUseProjectileTeleport))
 	float TeleportProjectileVelocity;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Teleport")
+	FHitResult TeleportLineTrace;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Hand")
 	USkeletalMeshComponent*	HandMesh;

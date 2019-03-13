@@ -42,7 +42,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Magazine")
 	int32 AmmoCount;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Magazine")
+	UPROPERTY(BlueprintReadOnly, Category = "Magazine")
 	int32 CurrentAmmo;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Magazine")

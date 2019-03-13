@@ -45,7 +45,7 @@ void AImpactEffect::BeginPlay()
 		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
 	}
 
-	//Spawn the deca;
+	//Spawn the decal
 	if (DefaultDecal.DecalMaterial)
 	{
 		FRotator RandomDecalRotation = SurfaceHit.ImpactNormal.Rotation().GetInverse();
