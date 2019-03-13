@@ -447,6 +447,16 @@ void AFirearm::Fire()
 
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = this;
+
+	if(AttachedCharacter)
+	{
+		SpawnParams.Instigator = AttachedCharacter;
+	}
+	else if(AttachedHand)
+	{
+		SpawnParams.Instigator = AttachedHand->GetPlayerPawn();
+	}
+	
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	for (int i = 0; i < BulletsPerShot; i++)
@@ -465,6 +475,10 @@ void AFirearm::Fire()
 		if (Projectile)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("projectile"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("no projectile"));
 		}
 	}
 
