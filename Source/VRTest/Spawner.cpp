@@ -12,6 +12,8 @@ ASpawner::ASpawner()
 	NumSpawned = 0;
 	MaxSpawns = 5;
 
+	bHidden = true;
+
 	SpawnerMeshPreview = CreateDefaultSubobject<USkeletalMeshComponent>("HandMesh");
 	SpawnerMeshPreview->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	RootComponent = SpawnerMeshPreview;
