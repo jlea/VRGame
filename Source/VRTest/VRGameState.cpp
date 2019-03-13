@@ -52,11 +52,15 @@ void AVRGameState::TriggerBulletTime(float Duration)
 
 void AVRGameState::OnCharacterKilled(AExtendedCharacter* Character, AController* Killer, const FHitResult& HitEvent)
 {
-	if (false)
+	if (Killer)
 	{
-		if (HitEvent.BoneName == Character->HeadBone)
+		const float DistanceToCharacter = FVector::Dist(Killer->GetPawn()->GetActorLocation(), Character->GetActorLocation());
+		if (DistanceToCharacter < 1000.0f)
 		{
-			TriggerBulletTime(BulletTimeDuration);
+			if (HitEvent.BoneName == Character->HeadBone)
+			{
+				TriggerBulletTime(BulletTimeDuration);
+			}
 		}
 	}
  	
