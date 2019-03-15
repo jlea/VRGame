@@ -237,6 +237,8 @@ void AFirearm::Tick(float DeltaTime)
 			EjectRound();
 			OnSlideBack();
 
+			OnSlideBackDelegate.Broadcast(this);
+
 			bHasSlidBack = true;
 		}
 	}
@@ -248,6 +250,8 @@ void AFirearm::Tick(float DeltaTime)
 
 			LoadRoundFromMagazine();
 			OnSlideForward();
+
+			OnSlideForwardDelegate.Broadcast(this);
 		}
 	}
 }

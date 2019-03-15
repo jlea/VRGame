@@ -288,6 +288,12 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Pump Action")
 	void OnSlideForward();
 
+	UPROPERTY(BlueprintAssignable, Category = "Weapon")
+	FFirearmEvent OnSlideForwardDelegate;
+
+	UPROPERTY(BlueprintAssignable, Category = "Weapon")
+	FFirearmEvent OnSlideBackDelegate;
+
 protected:
 	UPROPERTY()
 	AExtendedCharacter*	AttachedCharacter;
