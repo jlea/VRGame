@@ -340,6 +340,8 @@ void AHand::UpdateTeleport()
 		const FVector TraceStart = SphereCollision->GetComponentLocation();
 		const FVector TraceEnd = TraceStart + SphereCollision->GetForwardVector() * 100000.0f;
 
+		auto LastTeleportDestination = Cast<ATeleportDestination>(TeleportLineTrace.GetActor());
+
 		GetWorld()->LineTraceSingleByChannel(TeleportLineTrace, TraceStart, TraceEnd, ECC_GameTraceChannel4, CollisionParams);
 
 		if (TeleportLineTrace.IsValidBlockingHit())
@@ -347,7 +349,14 @@ void AHand::UpdateTeleport()
 			auto TeleportDestination = Cast<ATeleportDestination>(TeleportLineTrace.GetActor());
 			if (TeleportDestination)
 			{
+				if (!TeleportDestination->bHovered)
+				{
+					TeleportDestination->bHovered = true;
+					TeleportDestination->OnTeleportHovered(GetPlayerPawn(), this);
+				}
+
 				bHasValidTeleportLocation = true;
+				return;
 			}
 			else
 			{
@@ -358,7 +367,15 @@ void AHand::UpdateTeleport()
 		{
 			bHasValidTeleportLocation = false;
 		}
-		
-		//DrawDebugLine(GetWorld(), TraceStart, TeleportLineTrace.IsValidBlockingHit() ? TeleportLineTrace.ImpactPoint : TeleportLineTrace.TraceEnd, TeleportLineTrace.IsValidBlockingHit() ? FColor::Green : FColor::Red, false, 0.2f, SDPG_World, 1.0f);
+
+		if (LastTeleportDestination)
+		{
+			if (LastTeleportDestination->bHovered)
+			{
+				LastTeleportDestination->OnTeleportUnhovered(GetPlayerPawn(), this);
+			}
+
+			LastTeleportDestination->bHovered = false;
+		}
 	}
 }

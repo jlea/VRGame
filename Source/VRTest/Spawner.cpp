@@ -11,6 +11,7 @@ ASpawner::ASpawner()
 {
 	NumSpawned = 0;
 	MaxSpawns = 5;
+	RespawnTime = 5.0f;
 
 	bHidden = true;
 
@@ -112,7 +113,14 @@ void ASpawner::PawnKilled(AExtendedCharacter* Character, AController* Killer, co
 	}
 	else
 	{
-		// Queue up another
-		GetWorldTimerManager().SetTimer(TimerHandle_SpawnPawn, this, &ThisClass::SpawnPawn, RespawnTime);
+		if (RespawnTime > 0.0f)
+		{
+			// Queue up another
+			GetWorldTimerManager().SetTimer(TimerHandle_SpawnPawn, this, &ThisClass::SpawnPawn, RespawnTime);
+		}
+		else
+		{
+			SpawnPawn();
+		}
 	}
 }

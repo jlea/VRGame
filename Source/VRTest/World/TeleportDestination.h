@@ -9,6 +9,7 @@
 class USphereComponent;
 class APlayerPawn;
 class AHand;
+class ASpawner;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTeleportDelegate, ATeleportDestination*, Destination);
 
@@ -38,6 +39,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnTeleportUnhovered(APlayerPawn* Pawn, AHand* Hand);
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnTeleportStateChanged(bool bEnabled);
+
 	UPROPERTY(BlueprintReadOnly, EditInstanceOnly, Category = "Teleport")
 	bool bStartEnabled;
 
@@ -50,6 +54,15 @@ public:
 	UPROPERTY(BlueprintAssignable, BlueprintReadOnly, Category = "Teleport")
 	FTeleportDelegate OnTeleportedDelegate;
 
+	/* Enable this destination when all these spawners have triggered. */
+	UPROPERTY(EditInstanceOnly, Category = "Teleport")
+	TArray<ASpawner*>	LinkedSpawners;
+
+	UFUNCTION()
+	void OnSpawnerFinished(ASpawner* Spawner);
+
+	bool bHovered;
+
 protected:
 	UPROPERTY(VisibleAnywhere)
 	USphereComponent*	CollisionSphere;
@@ -59,5 +72,6 @@ protected:
 
 private:
 
+	int8 FinishedSpawners;
 	bool bEnabled;
 };

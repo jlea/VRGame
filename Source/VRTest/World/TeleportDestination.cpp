@@ -2,6 +2,7 @@
 
 #include "TeleportDestination.h"
 #include "PlayerPawn.h"
+#include "Spawner.h"
 #include "Components/SphereComponent.h"
 
 // Sets default values
@@ -16,7 +17,9 @@ ATeleportDestination::ATeleportDestination()
 	CollisionSphere->ShapeColor = FColor::White;
 
 	bDisableOnTeleport = true;
-	bStartEnabled = true;
+	bStartEnabled = false;
+	bHovered = false;
+	FinishedSpawners = 0;
 
 	RootComponent = CollisionSphere;
 }
@@ -27,6 +30,11 @@ void ATeleportDestination::BeginPlay()
 	Super::BeginPlay();
 
 	SetDestinationEnabled(bStartEnabled);
+
+	for (auto Spawner : LinkedSpawners)
+	{
+		Spawner->OnAllPawnsKilledDelegate.AddDynamic(this, &ThisClass::OnSpawnerFinished);
+	}
 }
 
 void ATeleportDestination::Reset()
@@ -34,6 +42,8 @@ void ATeleportDestination::Reset()
 	Super::Reset();
 
 	SetDestinationEnabled(bStartEnabled);
+
+	FinishedSpawners = 0;
 }
 
 // Called every frame
@@ -85,6 +95,18 @@ void ATeleportDestination::SetDestinationEnabled(bool bInEnabled)
 	{
 		SetActorEnableCollision(false);
 		CollisionSphere->ShapeColor = FColor::Red;
+	}
+
+	OnTeleportStateChanged(bEnabled);
+}
+
+void ATeleportDestination::OnSpawnerFinished(ASpawner* Spawner)
+{
+	FinishedSpawners++;
+
+	if (FinishedSpawners == LinkedSpawners.Num())
+	{
+		SetDestinationEnabled(true);
 	}
 }
 
