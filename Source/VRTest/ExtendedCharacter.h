@@ -116,6 +116,10 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Damage FX")
 	TArray<UParticleSystem*> HeadshotEffects;
 
+	/** Damage effects */
+	UPROPERTY(EditAnywhere, Category = "Damage FX")
+	TArray<UParticleSystem*> DamageEffects;
+
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Damage FX")
 	float HeadshotForceMultiplier;
 

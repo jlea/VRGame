@@ -162,77 +162,88 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 	const float BaseDamage = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
 	float FinalDamage = BaseDamage;
 
-	if (!bDead)
+	bool bHeadshot = false;
+
+	FHitResult HitResult;
+	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
 	{
-		bool bHeadshot = false;
-
-		FHitResult HitResult;
-		if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
+		const FPointDamageEvent* PointDamageEvent = (const FPointDamageEvent*)&DamageEvent;
+		if (PointDamageEvent)
 		{
-			const FPointDamageEvent* PointDamageEvent = (const FPointDamageEvent*)&DamageEvent;
-			if (PointDamageEvent)
-			{
-				HitResult = PointDamageEvent->HitInfo;
+			HitResult = PointDamageEvent->HitInfo;
 
-				if (!HeadBone.IsNone())
+			if (!HeadBone.IsNone())
+			{
+				if (HitResult.BoneName == HeadBone)
 				{
-					if (HitResult.BoneName == HeadBone)
-					{
-						bHeadshot = true;
-					}
+					bHeadshot = true;
 				}
 			}
 		}
+	}
 
-		if (bHeadshot)
+	if (bHeadshot)
+	{
+		if (HeadshotEffects.Num() > 0)
 		{
-			if (HeadshotEffects.Num() > 0)
+			UParticleSystem* HeadshotEffect = HeadshotEffects[FMath::RandRange(0, HeadshotEffects.Num() - 1)];
+			if (HeadshotEffect)
 			{
-				UParticleSystem* HeadshotEffect = HeadshotEffects[FMath::RandRange(0, HeadshotEffects.Num() - 1)];
-				if (HeadshotEffect)
-				{
-					UGameplayStatics::SpawnEmitterAttached(HeadshotEffect, GetMesh(), HeadBone, FVector::ZeroVector, FRotator(0,90.0f,0), EAttachLocation::SnapToTarget);
-				}
-			}
-
-			FinalDamage *= HeadshotMultiplier;
-		}
-
-		// Trace behind to find where our blood might spawn
-		if (BloodDecal)
-		{
-			FHitResult BloodTrace;
-			FCollisionObjectQueryParams ObjectQueryParams;
-			ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
-			ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
-			ObjectQueryParams.RemoveObjectTypesToQuery(ECC_Pawn);
-
-			const FVector TraceStart = DamageCauser->GetActorLocation();
-			const FVector TraceEnd = TraceStart + (DamageCauser->GetActorForwardVector() * BloodDecalMaxSprayDistance);
-			GetWorld()->LineTraceSingleByObjectType(BloodTrace, TraceStart, TraceEnd, ObjectQueryParams);
-
-			if (BloodTrace.IsValidBlockingHit())
-			{
-				FActorSpawnParameters SpawnParams;
-				SpawnParams.Owner = this;
-
-				FRotator RandomDecalRotation = BloodTrace.ImpactNormal.Rotation().GetInverse();
-				RandomDecalRotation.Add(-90.0f, 0.0f, 0.0f);
-				//RandomDecalRotation.Yaw += 90.0f;
-
-				const FVector SpawnLocation = BloodTrace.ImpactPoint;
-
-				if(bHeadshot)
-				{
-					GetWorld()->SpawnActor<ADecalActor>(HeadshotDecal, SpawnLocation, RandomDecalRotation, SpawnParams);
-				}
-				else
-				{
-					GetWorld()->SpawnActor<ADecalActor>(BloodDecal, SpawnLocation, RandomDecalRotation, SpawnParams);
-				}
+				UGameplayStatics::SpawnEmitterAttached(HeadshotEffect, GetMesh(), NAME_None, HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation().GetInverse(), EAttachLocation::KeepWorldPosition);
 			}
 		}
+
+		FinalDamage *= HeadshotMultiplier;
+	}
+	else
+	{
+		if (DamageEffects.Num() > 0)
+		{
+			UParticleSystem* DamageEffect = DamageEffects[FMath::RandRange(0, DamageEffects.Num() - 1)];
+			if (DamageEffect)
+			{
+				UGameplayStatics::SpawnEmitterAttached(DamageEffect, GetMesh(), NAME_None, HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation().GetInverse(), EAttachLocation::KeepWorldPosition);
+			}
+		}
+	}
+
+	// Trace behind to find where our blood might spawn
+	if (BloodDecal)
+	{
+		FHitResult BloodTrace;
+		FCollisionObjectQueryParams ObjectQueryParams;
+		ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+		ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
+		ObjectQueryParams.RemoveObjectTypesToQuery(ECC_Pawn);
+
+		const FVector TraceStart = DamageCauser->GetActorLocation();
+		const FVector TraceEnd = TraceStart + (DamageCauser->GetActorForwardVector() * BloodDecalMaxSprayDistance);
+		GetWorld()->LineTraceSingleByObjectType(BloodTrace, TraceStart, TraceEnd, ObjectQueryParams);
+
+		if (BloodTrace.IsValidBlockingHit())
+		{
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = this;
+
+			FRotator RandomDecalRotation = BloodTrace.ImpactNormal.Rotation().GetInverse();
+			RandomDecalRotation.Add(-90.0f, 0.0f, 0.0f);
+			//RandomDecalRotation.Yaw += 90.0f;
+
+			const FVector SpawnLocation = BloodTrace.ImpactPoint;
+
+			if(bHeadshot)
+			{
+				GetWorld()->SpawnActor<ADecalActor>(HeadshotDecal, SpawnLocation, RandomDecalRotation, SpawnParams);
+			}
+			else
+			{
+				GetWorld()->SpawnActor<ADecalActor>(BloodDecal, SpawnLocation, RandomDecalRotation, SpawnParams);
+			}
+		}
+	}
 	
+	if(!bDead)
+	{
 		CurrentHealth -= FinalDamage;
 		if (CurrentHealth <= 0.0f)
 		{
