@@ -55,12 +55,9 @@ void AVRGameState::OnCharacterKilled(AExtendedCharacter* Character, AController*
 	if (Killer)
 	{
 		const float DistanceToCharacter = FVector::Dist(Killer->GetPawn()->GetActorLocation(), Character->GetActorLocation());
-		if (DistanceToCharacter < 1000.0f)
+		if (DistanceToCharacter < 300.0f)
 		{
-			if (HitEvent.BoneName == Character->HeadBone)
-			{
-				TriggerBulletTime(BulletTimeDuration);
-			}
+			TriggerBulletTime(BulletTimeDuration);
 		}
 	}
  	
@@ -69,7 +66,10 @@ void AVRGameState::OnCharacterKilled(AExtendedCharacter* Character, AController*
 	// Killed the last character
 	if (NumDeadCharacters == SpawnedCharacters.Num())
 	{
-		TriggerBulletTime(BulletTimeDuration);
+		if (FMath::RandRange(0.0f, 1.0f) <= 0.35f)
+		{
+			TriggerBulletTime(BulletTimeDuration);
+		}
 	}
 }
 
