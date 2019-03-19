@@ -103,6 +103,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Animations", meta = (EditCondition=bAttachToSocket))
 	FName HandAttachSocket;
 
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Animations")
+	bool bXAxisOriented;
+
 	//////////////////////////////////////////////////////////////////////////
 	//	Special
 

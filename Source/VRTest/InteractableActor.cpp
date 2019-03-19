@@ -20,6 +20,7 @@ AInteractableActor::AInteractableActor()
 
 	bDropOnRelease = true;
 	bAttachToSocket = false;
+	bXAxisOriented = false;
 }
 
 // Called when the game starts or when spawned
@@ -118,10 +119,20 @@ void AInteractableActor::OnBeginPickup(AHand* Hand)
 
 			if (Hand->HandType == EControllerHand::Left)
 			{
-				FRotator NewRelativeRotation = RootComponent->RelativeRotation;
-				NewRelativeRotation.Roll += 180.0f;
+				if (bXAxisOriented)
+				{
+					FRotator NewRelativeRotation = RootComponent->RelativeRotation;
+					NewRelativeRotation.Roll += 180.0f;
 
-				SetActorRelativeRotation(NewRelativeRotation);
+					SetActorRelativeRotation(NewRelativeRotation);
+				}
+				else
+				{
+					FRotator NewRelativeRotation = RootComponent->RelativeRotation;
+					NewRelativeRotation.Pitch += 180.0f;
+
+					SetActorRelativeRotation(NewRelativeRotation);
+				}
 			}
 		}
 		else
