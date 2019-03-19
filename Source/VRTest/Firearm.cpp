@@ -81,7 +81,10 @@ void AFirearm::BeginPlay()
 	if (!MagazineBone.IsNone())
 	{
 		int32 BoneIndex = FirearmMesh->GetBoneIndex(MagazineBone);
-		FirearmMesh->HideBone(BoneIndex, PBO_None);
+		if (BoneIndex != INDEX_NONE)
+		{
+			FirearmMesh->HideBone(BoneIndex, PBO_None);
+		}
 	}
 
 	if(bStartWithMagazine)
