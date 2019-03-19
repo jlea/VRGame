@@ -23,6 +23,9 @@ public:
 	virtual void ResetLevel() override;
 	virtual void BeginPlay() override;
 
+	UFUNCTION()
+	void OnPlayerKilled(APlayerPawn* Player, AController* Killer, const FHitResult& HitEvent);
+
 	void SpawnWave();
 
 	UFUNCTION()

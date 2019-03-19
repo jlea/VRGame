@@ -39,7 +39,7 @@ private:
 
 	UFUNCTION()
 	void OnCharacterKilled(AExtendedCharacter* Character, AController* Killer, const FHitResult& HitEvent);
-
+	
 	//////////////////////////////////////////////////////////////////////////
 	//	Bullet time
 protected:

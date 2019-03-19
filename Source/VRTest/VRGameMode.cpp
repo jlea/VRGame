@@ -31,6 +31,18 @@ void AVRGameMode::BeginPlay()
 
 		Spawners.Add(*ActorItr);
 	}
+
+	for (TActorIterator<APlayerPawn> ActorItr(GetWorld()); ActorItr; ++ActorItr)
+	{
+		ActorItr->OnKilledDelegate.AddDynamic(this, &ThisClass::OnPlayerKilled);
+	}
+}
+
+void AVRGameMode::OnPlayerKilled(APlayerPawn* Player, AController* Killer, const FHitResult& HitEvent)
+{
+	FTimerHandle TimerHandle_LevelReset;
+
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle_LevelReset, this, &ThisClass::ResetLevel, 2.0f);
 }
 
 void AVRGameMode::OnAllPawnsKilledForSpawner(ASpawner* Spawner)

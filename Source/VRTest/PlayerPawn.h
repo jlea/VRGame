@@ -12,6 +12,8 @@ class AFirearm;
 class UCameraComponent;
 class UTextureRenderTarget2D;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FPlayerKilledDelegate, APlayerPawn*, Character, AController*, Killer, const FHitResult&, HitEvent);
+
 UCLASS()
 class VRTEST_API APlayerPawn : public APawn, public IGenericTeamAgentInterface
 {
@@ -24,6 +26,8 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	virtual void Reset() override;
 
 	FGenericTeamId TeamId;
 
@@ -110,6 +114,9 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Damage")
 	void OnKilled(AController* Killer, AActor *DamageCauser, struct FDamageEvent const& DamageEvent);
+
+	UPROPERTY(BlueprintAssignable)
+	FPlayerKilledDelegate OnKilledDelegate;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Damage")
 	int32 MaxHealth;

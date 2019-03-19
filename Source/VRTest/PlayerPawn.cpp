@@ -53,6 +53,16 @@ void APlayerPawn::BeginPlay()
 
 	ScopeCaptureComponent->Deactivate();
 
+	LastDamageTimestamp = DeathTimestamp = -FLT_MAX;
+	CurrentHealth = MaxHealth;
+	bDead = false;
+}
+
+void APlayerPawn::Reset()
+{
+	Super::Reset();
+
+	LastDamageTimestamp = DeathTimestamp = -FLT_MAX;
 	CurrentHealth = MaxHealth;
 	bDead = false;
 }
@@ -168,9 +178,8 @@ float APlayerPawn::TakeDamage(float Damage, struct FDamageEvent const& DamageEve
 void APlayerPawn::Kill(AController* Killer, AActor *DamageCauser, struct FDamageEvent const& DamageEvent)
 {
 	bDead = true;
+	DeathTimestamp = GetWorld()->GetTimeSeconds();
 
 	OnKilled(Killer, DamageCauser, DamageEvent);
-
-	DeathTimestamp = GetWorld()->GetTimeSeconds();
 }
 
