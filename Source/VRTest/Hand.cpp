@@ -23,11 +23,18 @@ AHand::AHand()
 	MotionController = CreateDefaultSubobject<UMotionControllerComponent>("MotionController");
 	MotionController->SetupAttachment(HandOrigin);
 
+	InteractionHelper = CreateDefaultSubobject<UStaticMeshComponent>("InteractionHelper");
+	InteractionHelper->SetupAttachment(HandOrigin);
+	InteractionHelper->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 	SphereCollision = CreateDefaultSubobject<USphereComponent>("SphereCollision");
 	SphereCollision->SetupAttachment(MotionController);
 
 	HandMesh = CreateDefaultSubobject<USkeletalMeshComponent>("HandMesh");
 	HandMesh->SetupAttachment(SphereCollision);
+
+	WeaponMountOrigin = CreateDefaultSubobject<USceneComponent>("WeaponMount");
+	WeaponMountOrigin->SetupAttachment(SphereCollision);
 
 	bUseProjectileTeleport = false;
 
@@ -216,7 +223,7 @@ void AHand::UpdateNearbyActors()
 
 	if (ClosestNearbyActor && !InteractingActor)
 	{
-		DrawDebugSphere(GetWorld(), ClosestNearbyActor->GetActorLocation(), 2.0f, 16, FColor::Green, true, 0.1f, SDPG_World, 1.0f);
+		InteractionHelper->SetWorldLocation(ClosestNearbyActor->GetActorLocation());
 	}
 
 	ClosestNearbyActor = ClosestActor;
@@ -224,6 +231,15 @@ void AHand::UpdateNearbyActors()
 	if (ClosestNearbyActor != OldNearbyActor)
 	{
 		OnHoverActorChanged(ClosestNearbyActor);
+
+		if (!ClosestNearbyActor)
+		{
+			InteractionHelper->SetHiddenInGame(true, true);
+		}
+		else
+		{
+			InteractionHelper->SetHiddenInGame(false, true);
+		}
 	}
 }
 

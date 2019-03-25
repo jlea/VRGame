@@ -68,7 +68,13 @@ protected:
 	USceneComponent*	HandOrigin;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Hand")
+	USceneComponent*	WeaponMountOrigin;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Hand")
 	USphereComponent*	SphereCollision;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Hand")
+	UStaticMeshComponent*	InteractionHelper;
 
 public:	
 	// Called every frame
@@ -82,6 +88,9 @@ public:
 	void OnTeleportReleased();
 
 	UFUNCTION(BlueprintPure, Category = "Hand")
+	USceneComponent* GetWeaponMountOrigin() const { return WeaponMountOrigin; }
+
+	UFUNCTION(BlueprintPure, Category = "Hand")
 	USphereComponent* GetSphereComponent() const { return SphereCollision; }
 
 	UFUNCTION(BlueprintPure, Category = "Hand")
@@ -93,7 +102,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Player")
 	APlayerPawn*	GetPlayerPawn();
 
-	UPROPERTY(BlueprintReadOnly, Category = "Hand")
+	UPROPERTY(BlueprintReadOnly, EditInstanceOnly, Category = "Hand")
 	EControllerHand	HandType;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Hand")
