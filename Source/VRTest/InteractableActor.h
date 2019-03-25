@@ -49,7 +49,7 @@ public:
 	AHand*	GetAttachedHand() { return AttachedHand; }
 	
 	UFUNCTION(BlueprintPure, Category = "VR")
-	AHand*	GetInteractingHand() { return InteractingHand; }
+	AHand*	GetBestInteractingHand();
 
 protected:
 	virtual void OnBeginPickup(AHand* Hand);
@@ -73,7 +73,7 @@ protected:
 	AHand*	AttachedHand;
 
 	UPROPERTY(BlueprintReadOnly)
-	AHand*	InteractingHand;
+	TArray<AHand*>	InteractingHands;
 
 public:
 	UPROPERTY(EditAnywhere, Category = "Gameplay")
@@ -105,6 +105,8 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Animations")
 	bool bXAxisOriented;
+
+	FRotator	RelativeOffset;
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Special

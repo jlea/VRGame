@@ -13,7 +13,6 @@ AInteractableActor::AInteractableActor()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	InteractingHand = nullptr;
 	AttachedHand = nullptr;
 
 	InteractPriority = EInteractPriority::Low;
@@ -44,10 +43,10 @@ void AInteractableActor::Tick(float DeltaTime)
 
 bool AInteractableActor::CanGrab(const AHand* Hand)
 {
-	if (InteractingHand && InteractingHand != Hand)
-	{
-		return false;
-	}
+// 	if (InteractingHand && InteractingHand != Hand)
+// 	{
+// 		return false;
+// 	}
 
 	// Can't grab.. already holding
 	if (AttachedHand && AttachedHand == Hand)
@@ -85,7 +84,7 @@ void AInteractableActor::EndGrab(AHand* Hand)
 		}
 	}
 
-	if (Hand == InteractingHand)
+	if (InteractingHands.Contains(Hand))
 	{
 		//GEngine->AddOnScreenDebugMessage(5, 2.0f, FColor::Yellow, FString::Printf(TEXT("%s: INTERACTING HAND RELEASED"), *GetName()), true, FVector2D(5.0f, 5.0f));
 
@@ -101,6 +100,25 @@ void AInteractableActor::Drop(AHand* Hand)
 	}
 }
 
+AHand* AInteractableActor::GetBestInteractingHand()
+{
+	for (auto PossibleInteractingHand : InteractingHands)
+	{
+		if (AttachedHand)
+		{
+			// Skip the attached hand 
+			if (PossibleInteractingHand == AttachedHand)
+			{
+				continue;
+			}
+		}
+
+		return PossibleInteractingHand;
+	}
+
+	return nullptr;
+}
+
 void AInteractableActor::OnBeginPickup(AHand* Hand)
 {
 	check(!AttachedHand);
@@ -112,36 +130,41 @@ void AInteractableActor::OnBeginPickup(AHand* Hand)
 	{
 		RootPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		RootPrimitive->SetSimulatePhysics(false);
-	
-		if (bAttachToSocket)
+	}
+
+	if (bAttachToSocket)
+	{
+		AttachToComponent(Hand->GetHandMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, HandAttachSocket);
+		
+		if (Hand->HandType == EControllerHand::Left)
 		{
-			AttachToComponent(Hand->GetHandMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, HandAttachSocket);
-
-			if (Hand->HandType == EControllerHand::Left)
+			if (bXAxisOriented)
 			{
-				if (bXAxisOriented)
-				{
-					FRotator NewRelativeRotation = RootComponent->RelativeRotation;
-					NewRelativeRotation.Roll += 180.0f;
+				FRotator NewRelativeRotation = RootComponent->RelativeRotation;
+				NewRelativeRotation.Roll += 180.0f;
+				RelativeOffset = NewRelativeRotation;
 
-					SetActorRelativeRotation(NewRelativeRotation);
-				}
-				else
-				{
-					FRotator NewRelativeRotation = RootComponent->RelativeRotation;
-					NewRelativeRotation.Pitch += 180.0f;
+				SetActorRelativeRotation(NewRelativeRotation);
+			}
+			else
+			{
+				FRotator NewRelativeRotation = RootComponent->RelativeRotation;
+				NewRelativeRotation.Pitch += 180.0f;
+				RelativeOffset = NewRelativeRotation;
 
-					SetActorRelativeRotation(NewRelativeRotation);
-				}
+				SetActorRelativeRotation(NewRelativeRotation);
 			}
 		}
-		else
-		{
-			AttachToComponent(Hand->GetHandMesh(), FAttachmentTransformRules::KeepWorldTransform);
-		}
 
-		UGameplayStatics::SpawnSoundAttached(PickupSound, GetRootComponent());
+		// Once in place, attach to the mount
+		AttachToComponent(Hand->GetWeaponMountOrigin(), FAttachmentTransformRules::KeepWorldTransform);
 	}
+	else
+	{
+		AttachToComponent(Hand->GetHandMesh(), FAttachmentTransformRules::KeepWorldTransform);
+	}
+
+	UGameplayStatics::SpawnSoundAttached(PickupSound, GetRootComponent());
 	
 	ReceiveOnBeginPickup(Hand);
 	OnPickedUpDelegate.Broadcast(this);
@@ -149,12 +172,12 @@ void AInteractableActor::OnBeginPickup(AHand* Hand)
 
 void AInteractableActor::OnBeginInteraction(AHand* Hand)
 {
-	check(!InteractingHand);
+	check(!InteractingHands.Contains(Hand));
 
 	//GEngine->AddOnScreenDebugMessage(1, 2.0f, FColor::Green, FString::Printf(TEXT("%s: Interacting"), *GetName()), true, FVector2D(3.0f, 3.0f));
 
 	// Already attached, so assume this is an interaction
-	InteractingHand = Hand;
+	InteractingHands.Add(Hand);
 
 	ReceiveOnBeginInteraction(Hand);
 	OnInteractionStart.Broadcast(this);
@@ -182,9 +205,9 @@ void AInteractableActor::OnDrop(AHand* Hand)
 
 void AInteractableActor::OnEndInteraction(AHand* Hand)
 {
-	check(InteractingHand);
+	check(InteractingHands.Contains(Hand));
 
-	InteractingHand = nullptr;
+	InteractingHands.Remove(Hand);
 
 	// BP event
 	ReceiveOnEndInteraction(Hand);
