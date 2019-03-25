@@ -15,6 +15,7 @@ AMagazine::AMagazine()
 {
 	MagazineMesh = CreateDefaultSubobject<UStaticMeshComponent>("MagazineMesh");
 	MagazineMesh->SetSimulatePhysics(true);
+	MagazineMesh->SetCollisionProfileName(TEXT("Weapon"));
 	RootComponent = MagazineMesh;
 
 	AmmoCount = 30;
@@ -52,12 +53,12 @@ bool AMagazine::CanGrab(const AHand* Hand)
 		}
 
 		// Don't allow pickup if we are in an empty weapon with some ammo, prefer to use the slide instead.
-		if(AttachedFirearm->ChamberedRoundStatus == EChamberedRoundStatus::NoRound && CurrentAmmo > 0)
+		if (AttachedFirearm->ChamberedRoundStatus == EChamberedRoundStatus::NoRound && CurrentAmmo > 0)
 		{
 			return false;
 		}
 	}	
-	
+
 	return Super::CanGrab(Hand);
 }
 
@@ -97,7 +98,6 @@ void AMagazine::OnMagazineLoaded(AFirearm* Firearm)
 
 	// Increase priority when loaded
 	InteractPriority = EInteractPriority::Medium;
-
 }
 
 void AMagazine::OnMagazineEjected(AFirearm* Firearm)
