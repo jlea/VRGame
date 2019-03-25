@@ -74,13 +74,22 @@ void APlayerPawn::Tick(float DeltaTime)
 
 	if (ScopeFirearm)
 	{
-		FVector MuzzleLocation = ScopeFirearm->FirearmMesh->GetBoneLocation(ScopeFirearm->MuzzleBone, EBoneSpaces::ComponentSpace);
-		FRotator MuzzleRotation = ScopeFirearm->FirearmMesh->GetBoneQuaternion(ScopeFirearm->MuzzleBone, EBoneSpaces::ComponentSpace).Rotator();
+		FVector MuzzleLocation = ScopeFirearm->FirearmMesh->GetSocketLocation(ScopeFirearm->MuzzleBone);
+		FRotator MuzzleRotation = ScopeFirearm->FirearmMesh->GetSocketRotation(ScopeFirearm->MuzzleBone);
 
-		LastScopePosition = FMath::VInterpTo(LastScopePosition, MuzzleLocation, DeltaTime, ScopeInterpSpeed);
-		LastScopeRotation = FMath::RInterpTo(LastScopeRotation, MuzzleRotation, DeltaTime, ScopeInterpSpeed);
+		if (ScopeInterpSpeed > 0.0f)
+		{
+			LastScopePosition = FMath::VInterpTo(LastScopePosition, MuzzleLocation, DeltaTime, ScopeInterpSpeed);
+			LastScopeRotation = FMath::RInterpTo(LastScopeRotation, MuzzleRotation, DeltaTime, ScopeInterpSpeed);
+		}
+		else
+		{
+			LastScopePosition = MuzzleLocation;
+			LastScopeRotation = MuzzleRotation;
+		}
 
-		ScopeCaptureComponent->SetRelativeRotation(MuzzleRotation);
+		ScopeCaptureComponent->SetWorldLocation(LastScopePosition);
+		ScopeCaptureComponent->SetWorldRotation(LastScopeRotation);
 	}
 }
 
@@ -149,7 +158,16 @@ void APlayerPawn::TeleportReleased()
 
 void APlayerPawn::SetScopeFirearm(AFirearm* Firearm)
 {
-
+	ScopeFirearm = Firearm;
+	
+	if (ScopeFirearm)
+	{
+		ScopeCaptureComponent->Activate();
+	}
+	else
+	{
+		ScopeCaptureComponent->Deactivate();
+	}
 }
 
 float APlayerPawn::TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -181,5 +199,17 @@ void APlayerPawn::Kill(AController* Killer, AActor *DamageCauser, struct FDamage
 	DeathTimestamp = GetWorld()->GetTimeSeconds();
 
 	OnKilled(Killer, DamageCauser, DamageEvent);
+
+	FHitResult HitResult;
+	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
+	{
+		const FPointDamageEvent* PointDamageEvent = (const FPointDamageEvent*)&DamageEvent;
+		if (PointDamageEvent)
+		{
+			HitResult = PointDamageEvent->HitInfo;
+		}
+	}
+
+	OnKilledDelegate.Broadcast(this, Killer, HitResult);
 }
 
