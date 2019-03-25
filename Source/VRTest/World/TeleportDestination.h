@@ -42,6 +42,12 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnTeleportStateChanged(bool bEnabled);
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnPlayerLeft();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnPlayerArrived();
+
 	UPROPERTY(BlueprintReadOnly, EditInstanceOnly, Category = "Teleport")
 	bool bStartEnabled;
 
@@ -73,5 +79,8 @@ protected:
 private:
 
 	int8 FinishedSpawners;
+
 	bool bEnabled;
+
+	bool bPlayerOverlapping;
 };

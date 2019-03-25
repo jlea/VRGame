@@ -19,6 +19,7 @@ ATeleportDestination::ATeleportDestination()
 	bDisableOnTeleport = true;
 	bStartEnabled = false;
 	bHovered = false;
+	bPlayerOverlapping = false;
 	FinishedSpawners = 0;
 
 	RootComponent = CollisionSphere;
@@ -67,12 +68,30 @@ void ATeleportDestination::TeleportToDestination(APlayerPawn* Pawn, AHand* Hand)
 		TeleportDestination = PostTraceHit.ImpactPoint;
 	}
 
+
+	// Hide our current location 
+	TSet<AActor*>	OverlappingActors;
+	Pawn->GetOverlappingActors(OverlappingActors, ATeleportDestination::StaticClass());
+
+	for (auto OverlappingActor : OverlappingActors)
+	{
+		auto OverlappingDestination = Cast<ATeleportDestination>(OverlappingActor);
+		if (OverlappingDestination)
+		{
+			OverlappingDestination->bPlayerOverlapping = false;
+			OverlappingDestination->OnPlayerLeft();
+		}
+	}
+
 	Pawn->SetActorLocation(TeleportDestination);
 	Pawn->SetActorRotation(GetActorRotation());
 
 	Pawn->OnTeleported(TeleportDestination);
 
 	OnTeleportedDelegate.Broadcast(this);
+
+	bPlayerOverlapping = true;
+	OnPlayerArrived();
 
 	if (bDisableOnTeleport)
 	{
