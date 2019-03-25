@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "Magazine.h"
+#include "DrawDebugHelpers.h"
 #include "PlayerPawn.h"
 #include "ExtendedCharacter.h"
 #include "Particles/ParticleSystem.h"
@@ -60,15 +61,15 @@ AFirearm::AFirearm()
 
 	bTriggerDown = false;
 	HandAttachSocket = TEXT("Weapon");
-	MagazineAttachSocket = TEXT("MagazineAttachSocket");
+	MagazineAttachSocket = TEXT("Magazine");
 	CharacterAttachSocket = TEXT("WeaponSocket");
-	ShellAttachSocket = TEXT("ShellEjectSocket");
+	ShellAttachSocket = TEXT("Shell");
 
 	CartridgeEjectVelocity = 400.0f;
 
-	PickupBones.Add(TEXT("b_gun_Root"));
-	PickupBones.Add(TEXT("b_gun_trigger"));
-	PickupBones.Add(TEXT("b_gun_stock"));
+	bUsingGrip = false;
+	bUseTwoHandedGrip = false;
+	GripBone = TEXT("Grip");
 
 	RootComponent = FirearmMesh;
 }
@@ -204,24 +205,40 @@ void AFirearm::Tick(float DeltaTime)
 		}
 	}
 
-	if (InteractingHand && InteractingHand != AttachedHand)
+	bool bHoldingSlide = false;
+
+	if (GetBestInteractingHand())
 	{
-		const FVector StartLocation = FirearmMesh->GetSocketLocation(SlideStartSocket);
-		const FVector EndLocation = FirearmMesh->GetSocketLocation(SlideEndSocket);
-		const FVector HandLocation = InteractingHand->GetHandSelectionOrigin();
-		const FVector ClosestPoint = FMath::ClosestPointOnLine(StartLocation, EndLocation, HandLocation);
+		if (bUsingGrip)
+		{
+			FTransform AttachedHandTransform = GetAttachedHand()->GetSphereComponent()->GetComponentTransform();
 
-		//DrawDebugSphere(GetWorld(), ClosestPoint, 5.0f, 8, FColor::Red, false, 0.1f);
+			FVector DirToGrip = (GetBestInteractingHand()->GetSphereComponent()->GetComponentLocation() - AttachedHandTransform.GetLocation()).GetSafeNormal();
+			FRotator RotToGrip = DirToGrip.Rotation();
+			RotToGrip.Roll = GetAttachedHand()->GetSphereComponent()->GetComponentRotation().Roll;
 
-		const float DistanceToStart = FVector::Dist2D(ClosestPoint, StartLocation);
-		const float DistanceToEnd = FVector::Dist2D(ClosestPoint, EndLocation);
+			GetAttachedHand()->GetWeaponMountOrigin()->SetWorldRotation(RotToGrip);
+		}
+		else
+		{
+			const FVector StartLocation = FirearmMesh->GetSocketLocation(SlideStartSocket);
+			const FVector EndLocation = FirearmMesh->GetSocketLocation(SlideEndSocket);
+			const FVector HandLocation = GetBestInteractingHand()->GetHandSelectionOrigin();
+			const FVector ClosestPoint = FMath::ClosestPointOnLine(StartLocation, EndLocation, HandLocation);
 
-		const float DistanceBetweenSockets = FVector::Dist2D(StartLocation, EndLocation);
-		const float Ratio = 1.0f - (DistanceToStart / DistanceBetweenSockets);
+			const float DistanceToStart = FVector::Dist2D(ClosestPoint, StartLocation);
+			const float DistanceToEnd = FVector::Dist2D(ClosestPoint, EndLocation);
 
-		SlideProgress = Ratio;
+			const float DistanceBetweenSockets = FVector::Dist2D(StartLocation, EndLocation);
+			const float Ratio = 1.0f - (DistanceToStart / DistanceBetweenSockets);
+
+			SlideProgress = Ratio;
+			bHoldingSlide = true;
+		}
+
 	}
-	else
+	
+	if(!bHoldingSlide)
 	{
 		if (bSnapSlideForwardOnRelease)
 		{
@@ -319,7 +336,22 @@ void AFirearm::OnBeginInteraction(AHand* Hand)
 	}
 	else
 	{
-		//Hand->GetHandMesh()->AttachToComponent(FirearmMesh, FAttachmentTransformRules::KeepWorldTransform, SlideAttachSocket);
+		if (bUseTwoHandedGrip)
+		{
+			if (!GripBone.IsNone())
+			{
+				const FVector HandLocation = Hand->GetSphereComponent()->GetComponentLocation();
+				const float HalfRadius = Hand->GetSphereComponent()->GetScaledSphereRadius() / 2;
+
+				const float DistanceToGripBone = (FirearmMesh->GetBoneLocation(GripBone) - HandLocation).Size();
+				if (DistanceToGripBone <= HalfRadius)
+				{
+					bUsingGrip = true;
+
+					//Hand->GetHandMesh()->AttachToComponent(FirearmMesh, FAttachmentTransformRules::KeepWorldTransform, SlideAttachSocket);
+				}
+			}
+		}
 	}
 }
 
@@ -333,7 +365,17 @@ void AFirearm::OnEndInteraction(AHand* Hand)
 	}
 	else
 	{
-		//Hand->ResetMeshToOrigin();
+		if (bUsingGrip)
+		{
+			if (GetAttachedHand())
+			{
+				GetAttachedHand()->GetWeaponMountOrigin()->SetRelativeRotation(FRotator::ZeroRotator);
+			}
+	
+			bUsingGrip = false;
+
+			//Hand->ResetMeshToOrigin();
+		}
 	}
 }
 

@@ -120,8 +120,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	bool EjectLoadedMagazine();
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon")
-	TArray<FName> PickupBones;
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon (Grip)")
+	bool bUseTwoHandedGrip;
+
+	/* If specified, will allow two handed usage on the grip */
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon (Grip)", meta = (EditCondition=bUseTwoHandedGrip))
+	FName GripBone;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon (Grip)", meta = (EditCondition = bUseTwoHandedGrip))
+	FName GripAttachSocket;
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Firearm
@@ -172,7 +179,7 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta=(EditUsing=bSnapSlideForwardOnRelease), Category = "Pump Action")
 	float SnapSlideSpeed;
-
+	
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Mesh")
 	USkeletalMeshComponent* FirearmMesh;
 
@@ -307,4 +314,6 @@ protected:
 
 	bool bHasSlidBack;
 	bool bEjectRoundOnFire;
+
+	bool bUsingGrip;
 };
