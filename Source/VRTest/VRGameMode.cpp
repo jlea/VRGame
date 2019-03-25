@@ -5,6 +5,7 @@
 #include "VRGameState.h"
 #include "UI/VRHUD.h"
 #include "Spawner.h"
+#include "GameFramework/GameSession.h"
 #include "PlayerPawn.h"
 
 AVRGameMode::AVRGameMode()
@@ -13,6 +14,14 @@ AVRGameMode::AVRGameMode()
 	HUDClass = AVRHUD::StaticClass();
 
 	DefaultPawnClass = APlayerPawn::StaticClass();
+}
+
+void AVRGameMode::RestartGame()
+{
+	if (GameSession->CanRestartGame())
+	{
+		GetWorld()->ServerTravel("?Restart", false);
+	}
 }
 
 void AVRGameMode::ResetLevel()
@@ -42,7 +51,7 @@ void AVRGameMode::OnPlayerKilled(APlayerPawn* Player, AController* Killer, const
 {
 	FTimerHandle TimerHandle_LevelReset;
 
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_LevelReset, this, &ThisClass::ResetLevel, 2.0f);
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle_LevelReset, this, &ThisClass::RestartGame, 7.0f);
 }
 
 void AVRGameMode::OnAllPawnsKilledForSpawner(ASpawner* Spawner)

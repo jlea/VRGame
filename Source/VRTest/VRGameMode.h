@@ -20,6 +20,10 @@ class VRTEST_API AVRGameMode : public AGameModeBase
 	AVRGameMode();
 
 public:
+	/** Restart the game, by default travel to the current map */
+	UFUNCTION(BlueprintCallable, Category = "Game")
+	virtual void RestartGame();
+
 	virtual void ResetLevel() override;
 	virtual void BeginPlay() override;
 
