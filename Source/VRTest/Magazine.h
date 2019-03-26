@@ -20,7 +20,8 @@ public:
 
 	virtual void BeginPlay() override;
 
-	virtual bool CanGrab(const AHand* Hand) override;
+	virtual bool CanHolster() const override; 
+	virtual bool CanInteract(const AHand* InteractingHand, FInteractionHelperReturnParams& Params) const override;
 
 	virtual void OnBeginPickup(AHand* Hand) override;
 	virtual void OnDrop(AHand* Hand) override;

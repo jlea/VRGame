@@ -34,14 +34,14 @@ void ACartridge::BeginPlay()
 	Super::BeginPlay();
 }
 
-bool ACartridge::CanGrab(const AHand* Hand)
+bool ACartridge::CanInteract(const AHand* InteractingHand, FInteractionHelperReturnParams& Params) const
 {
-	if (Super::CanGrab(Hand))
+	if (bSpentRound)
 	{
-		return !bSpentRound;
+		return false;
 	}
 
-	return false;
+	return Super::CanInteract(InteractingHand, Params);
 }
 
 void ACartridge::OnDrop(AHand* Hand)

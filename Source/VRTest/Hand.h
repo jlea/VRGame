@@ -12,6 +12,7 @@ class AInteractableActor;
 class USphereComponent;
 class APlayerController;
 class APlayerPawn;
+class UWidgetInteractionComponent;
 
 UENUM(BlueprintType)
 enum class EHandGripState : uint8
@@ -112,7 +113,7 @@ public:
 	AInteractableActor*	GetClosestActorToHand() { return ClosestNearbyActor; }
 
 	UFUNCTION(BlueprintPure, Category = "Hand")
-	AInteractableActor*	GetInteractingActor() { return InteractingActor; }
+	AInteractableActor*	GetInteractingActor() const { return InteractingActor; }
 
 	UFUNCTION(BlueprintPure, Category = "Hand")
 	TArray<AInteractableActor*>	GetNearbyActors()
@@ -160,4 +161,10 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Hand")
 	void ReceiveOnGrab(AInteractableActor* NewActor);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Hand")
+	void OnDeadGrabPressed();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Hand")
+	void OnDeadGrabReleased();
 };

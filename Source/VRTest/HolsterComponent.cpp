@@ -51,6 +51,11 @@ void UHolsterComponent::TickComponent(float DeltaTime, enum ELevelTick TickType,
 			continue;
 		}
 
+		if (!InteractableActor->CanHolster())
+		{
+			continue;
+		}
+
 		ValidHoveredActors.Add(InteractableActor);
 	}
 

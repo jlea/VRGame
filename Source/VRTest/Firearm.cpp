@@ -20,6 +20,7 @@
 // Sets default values
 AFirearm::AFirearm()
 {
+	bEjectRoundOnSlide = true;
 	bHasSlidBack = false;
 	SlideStartSocket = TEXT("SlideStart");
 	SlideEndSocket = TEXT("SlideEnd");
@@ -67,6 +68,7 @@ AFirearm::AFirearm()
 
 	CartridgeEjectVelocity = 400.0f;
 
+	bUsingSlide = false;
 	bUsingGrip = false;
 	bUseTwoHandedGrip = false;
 	GripBone = TEXT("Grip");
@@ -205,8 +207,6 @@ void AFirearm::Tick(float DeltaTime)
 		}
 	}
 
-	bool bHoldingSlide = false;
-
 	if (GetBestInteractingHand())
 	{
 		if (bUsingGrip)
@@ -221,24 +221,26 @@ void AFirearm::Tick(float DeltaTime)
 		}
 		else
 		{
-			const FVector StartLocation = FirearmMesh->GetSocketLocation(SlideStartSocket);
-			const FVector EndLocation = FirearmMesh->GetSocketLocation(SlideEndSocket);
-			const FVector HandLocation = GetBestInteractingHand()->GetHandSelectionOrigin();
-			const FVector ClosestPoint = FMath::ClosestPointOnLine(StartLocation, EndLocation, HandLocation);
+			if (bUsingSlide)
+			{
+				const FVector StartLocation = FirearmMesh->GetSocketLocation(SlideStartSocket);
+				const FVector EndLocation = FirearmMesh->GetSocketLocation(SlideEndSocket);
+				const FVector HandLocation = GetBestInteractingHand()->GetHandSelectionOrigin();
+				const FVector ClosestPoint = FMath::ClosestPointOnLine(StartLocation, EndLocation, HandLocation);
 
-			const float DistanceToStart = FVector::Dist2D(ClosestPoint, StartLocation);
-			const float DistanceToEnd = FVector::Dist2D(ClosestPoint, EndLocation);
+				const float DistanceToStart = FVector::Dist2D(ClosestPoint, StartLocation);
+				const float DistanceToEnd = FVector::Dist2D(ClosestPoint, EndLocation);
 
-			const float DistanceBetweenSockets = FVector::Dist2D(StartLocation, EndLocation);
-			const float Ratio = 1.0f - (DistanceToStart / DistanceBetweenSockets);
+				const float DistanceBetweenSockets = FVector::Dist2D(StartLocation, EndLocation);
+				const float Ratio = 1.0f - (DistanceToStart / DistanceBetweenSockets);
 
-			SlideProgress = Ratio;
-			bHoldingSlide = true;
+				SlideProgress = Ratio;
+			}
 		}
 
 	}
 	
-	if(!bHoldingSlide)
+	if(!bUsingSlide)
 	{
 		if (bSnapSlideForwardOnRelease)
 		{
@@ -254,7 +256,11 @@ void AFirearm::Tick(float DeltaTime)
 	{
 		if (SlideProgress >= 1.0)
 		{
-			EjectRound();
+			if (bEjectRoundOnSlide)
+			{
+				EjectRound();
+			}
+
 			OnSlideBack();
 
 			OnSlideBackDelegate.Broadcast(this);
@@ -276,6 +282,77 @@ void AFirearm::Tick(float DeltaTime)
 	}
 }
 
+bool AFirearm::CanInteract(const AHand* InteractingHand, FInteractionHelperReturnParams& Params) const
+{
+	if (AttachedCharacter)
+	{
+		return false;
+	}
+
+	if (InteractingHand == AttachedHand)
+	{
+		Params.Location = GetActorLocation();
+		Params.Tag = TEXT("Trigger");
+		return true;
+	}
+	else
+	{
+		const FVector HandLocation = InteractingHand->GetSphereComponent()->GetComponentLocation();
+		const float TestRadius = InteractingHand->GetSphereComponent()->GetScaledSphereRadius() / 2;
+
+		if (bUseTwoHandedGrip)
+		{
+			if (!GripBone.IsNone())
+			{
+				const FVector GripBoneLocation = FirearmMesh->GetBoneLocation(GripBone);
+
+				const float DistanceToGripBone = (GripBoneLocation - HandLocation).Size();
+				if (DistanceToGripBone <= TestRadius)
+				{
+					Params.Tag = TEXT("Grip");
+					Params.Location = GripBoneLocation;
+					return true;
+				}
+			}
+		}
+
+		if (!SlideEndSocket.IsNone())
+		{
+			const FVector SlideBoneLocation = FirearmMesh->GetSocketLocation(SlideEndSocket);
+			const float DistanceToSlideBone = (SlideBoneLocation - HandLocation).Size();
+
+			if (DistanceToSlideBone <= TestRadius)
+			{
+				Params.Tag = TEXT("Slide");
+				Params.Location = SlideBoneLocation;
+				return true;
+			}
+		}
+
+		if (!MagazineAttachSocket.IsNone())
+		{
+			const FVector MagazineBoneLocation = FirearmMesh->GetSocketLocation(MagazineAttachSocket);
+
+			auto HeldMagazine = Cast<AMagazine>(InteractingHand->GetInteractingActor());
+			if (HeldMagazine)
+			{
+				Params.Tag = TEXT("LoadMagazine");
+				Params.Location = MagazineBoneLocation;
+				return true;
+			}
+		}
+	}
+
+	if (!AttachedHand)
+	{
+		Params.Tag = TEXT("Weapon");
+		Params.Location = GetActorLocation();
+		return true;
+	}
+
+	return false;
+}
+
 void AFirearm::SetAmmoPreviewStatus(EAmmoPreviewStatus NewPreviewStatus)
 {
 	AmmoPreviewStatus = NewPreviewStatus;
@@ -292,65 +369,51 @@ void AFirearm::SetAmmoPreviewStatus(EAmmoPreviewStatus NewPreviewStatus)
 	OnNearbyHeldAmmoChanged(AmmoPreviewStatus);
 }
 
-bool AFirearm::CanGrab(const AHand* Hand)
-{
-	if (AttachedCharacter)
-	{
-		return false;
-	}
-
-	return Super::CanGrab(Hand);
-}
-
 void AFirearm::OnBeginInteraction(AHand* Hand)
 {
 	Super::OnBeginInteraction(Hand);
 
-	if (Hand == AttachedHand)
+	FInteractionHelperReturnParams Params;
+
+	if (CanInteract(Hand, Params))
 	{
-		if (ChamberedRoundStatus == EChamberedRoundStatus::NoRound || ChamberedRoundStatus == EChamberedRoundStatus::Spent)
+		if (Params.Tag == TEXT("Grip"))
 		{
-			UGameplayStatics::PlaySoundAtLocation(this, DryFireSound, FirearmMesh->GetSocketLocation(MuzzleBone));
-
-			if (bOpenBolt && SlideProgress > 0.0f)
-			{
-				// Slide it forward
-				if (bHasSlidBack)
-				{
-					LoadRoundFromMagazine();
-					bHasSlidBack = false;
-				}
-
-				SlideProgress = 0.0f;
-				OnSlideForward();
-			}
-			else
-			{
-				OnDryFire();
-			}
-
-			return;
+			bUsingGrip = true;
 		}
 
-		bTriggerDown = true;
-	}
-	else
-	{
-		if (bUseTwoHandedGrip)
+		if (Params.Tag == TEXT("Slide"))
 		{
-			if (!GripBone.IsNone())
+			bUsingSlide = true;
+		}
+
+		if (Params.Tag == TEXT("Trigger"))
+		{
+			if (ChamberedRoundStatus == EChamberedRoundStatus::NoRound || ChamberedRoundStatus == EChamberedRoundStatus::Spent)
 			{
-				const FVector HandLocation = Hand->GetSphereComponent()->GetComponentLocation();
-				const float HalfRadius = Hand->GetSphereComponent()->GetScaledSphereRadius() / 2;
+				UGameplayStatics::PlaySoundAtLocation(this, DryFireSound, FirearmMesh->GetSocketLocation(MuzzleBone));
 
-				const float DistanceToGripBone = (FirearmMesh->GetBoneLocation(GripBone) - HandLocation).Size();
-				if (DistanceToGripBone <= HalfRadius)
+				if (bOpenBolt && SlideProgress > 0.0f)
 				{
-					bUsingGrip = true;
+					// Slide it forward
+					if (bHasSlidBack)
+					{
+						LoadRoundFromMagazine();
+						bHasSlidBack = false;
+					}
 
-					//Hand->GetHandMesh()->AttachToComponent(FirearmMesh, FAttachmentTransformRules::KeepWorldTransform, SlideAttachSocket);
+					SlideProgress = 0.0f;
+					OnSlideForward();
 				}
+				else
+				{
+					OnDryFire();
+				}
+
+				return;
 			}
+
+			bTriggerDown = true;
 		}
 	}
 }
@@ -375,6 +438,11 @@ void AFirearm::OnEndInteraction(AHand* Hand)
 			bUsingGrip = false;
 
 			//Hand->ResetMeshToOrigin();
+		}
+
+		if (bUsingSlide)
+		{
+			bUsingSlide = false;
 		}
 	}
 }
@@ -521,13 +589,14 @@ void AFirearm::Fire()
 		FRotator SpawnRotation = MuzzleTransform.GetRotation().Rotator() + FRotator(FMath::RandRange(-MuzzleSpread, MuzzleSpread), FMath::RandRange(-MuzzleSpread, MuzzleSpread), 0.0f);
 
 		auto Projectile = GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnLocation, SpawnRotation, SpawnParams);
-		if (Projectile)
+	
+		if (GetAttachedHand())
 		{
-			UE_LOG(LogTemp, Warning, TEXT("projectile"));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("no projectile"));
+			auto PlayerPawn = GetAttachedHand()->GetPlayerPawn();
+			if (PlayerPawn)
+			{
+				PlayerPawn->OnFirearmFire.Broadcast(PlayerPawn, this);
+			}
 		}
 	}
 

@@ -95,7 +95,7 @@ public:
 	//////////////////////////////////////////////////////////////////////////
 	//	VR
 
-	virtual bool CanGrab(const AHand* Hand) override;
+	virtual bool CanInteract(const AHand* InteractingHand, FInteractionHelperReturnParams& Params) const;
 
 	virtual void OnBeginInteraction(AHand* Hand) override;
 	virtual void OnEndInteraction(AHand* Hand) override;
@@ -159,27 +159,30 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnDryFire();
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Pump Action")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon (Slide)")
 	FName SlideStartSocket;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Pump Action")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon (Slide)")
 	FName SlideEndSocket;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Pump Action")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon (Slide)")
 	FName SlideAttachSocket;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Pump Action")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon (Slide)")
 	float SlideProgress;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Pump Action")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon (Slide)")
 	bool bOpenBolt;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Pump Action")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon (Slide)")
 	bool bSnapSlideForwardOnRelease;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta=(EditUsing=bSnapSlideForwardOnRelease), Category = "Pump Action")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta=(EditUsing=bSnapSlideForwardOnRelease), Category = "Weapon (Slide)")
 	float SnapSlideSpeed;
-	
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon (Slide)")
+	bool bEjectRoundOnSlide;
+
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Mesh")
 	USkeletalMeshComponent* FirearmMesh;
 
@@ -189,19 +192,19 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	UBoxComponent*	MagazineCollisionBox;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon (Animations)")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon (Interaction)")
 	FName MagazineAttachSocket;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon (Animations)")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon (Interaction)")
 	FName CharacterAttachSocket;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon (Animations)")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon (Interaction)")
 	FName ShellAttachSocket;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon (Interaction)")
 	FName MagazineBone;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon FX")
 	FName MuzzleBone;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon FX")
@@ -313,7 +316,9 @@ protected:
 	float LastFireTime;
 
 	bool bHasSlidBack;
+
 	bool bEjectRoundOnFire;
 
+	bool bUsingSlide;
 	bool bUsingGrip;
 };

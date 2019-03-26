@@ -37,7 +37,12 @@ void AMagazine::BeginPlay()
 	CurrentAmmo = AmmoCount;
 }
 
-bool AMagazine::CanGrab(const AHand* Hand)
+bool AMagazine::CanHolster() const
+{
+	return CurrentAmmo > 0;
+}
+
+bool AMagazine::CanInteract(const AHand* InteractingHand, FInteractionHelperReturnParams& Params) const
 {
 	if (!bInteractable)
 	{
@@ -46,9 +51,14 @@ bool AMagazine::CanGrab(const AHand* Hand)
 
 	if (AttachedFirearm)
 	{
-		// Don't allow magazine pickup if we're in a gun on the ground
 		if (!AttachedFirearm->GetAttachedHand())
 		{
+			// Don't allow magazine pickup if we aren't in a held weapon
+			return false;
+		}
+		else if (AttachedFirearm->GetAttachedHand() == InteractingHand)
+		{
+			// Prevent grab by the held hand
 			return false;
 		}
 
@@ -57,9 +67,16 @@ bool AMagazine::CanGrab(const AHand* Hand)
 		{
 			return false;
 		}
-	}	
+	}
+	else
+	{
+		if (CurrentAmmo == 0)
+		{
+			return false;
+		}
+	}
 
-	return Super::CanGrab(Hand);
+	return Super::CanInteract(InteractingHand, Params);
 }
 
 void AMagazine::OnBeginPickup(AHand* Hand)
@@ -92,8 +109,6 @@ void AMagazine::OnMagazineLoaded(AFirearm* Firearm)
 	AttachToComponent(Firearm->FirearmMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, Firearm->MagazineAttachSocket);
 	MagazineMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
-	GEngine->AddOnScreenDebugMessage(1, 2.0f, FColor::Green, FString::Printf(TEXT("%s: Loading magazine"), *GetName()), true, FVector2D(3.0f, 3.0f));
-
 	AttachedFirearm = Firearm;
 
 	// Increase priority when loaded
@@ -103,8 +118,6 @@ void AMagazine::OnMagazineLoaded(AFirearm* Firearm)
 void AMagazine::OnMagazineEjected(AFirearm* Firearm)
 {
 	UGameplayStatics::SpawnSoundAttached(EjectSound, MagazineMesh);
-
-	GEngine->AddOnScreenDebugMessage(3, 1.0f, FColor::Red, FString::Printf(TEXT("%s: Ejecting Magazine %s!"), *Firearm->GetName(), *GetName()), true, FVector2D(3.0f, 3.0f));
 
 	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);	
 	MagazineMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);

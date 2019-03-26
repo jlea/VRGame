@@ -9,6 +9,7 @@
 #include "VRGameState.h"
 #include "Engine.h"
 #include "World/TeleportDestination.h"
+#include "WidgetInteractionComponent.h"
 #include "InteractableActor.h"
 
 // Sets default values
@@ -109,6 +110,27 @@ void AHand::Tick(float DeltaTime)
 			GripState = EHandGripState::Open;
 		}
 	}
+
+	FInteractionHelperReturnParams Params;
+
+	const bool bShouldDrawHelper = ClosestNearbyActor && ClosestNearbyActor->CanInteract(this, Params) && Params.bRenderHelper;
+
+	if(bShouldDrawHelper)
+	{
+		if (InteractionHelper->bHiddenInGame)
+		{
+			InteractionHelper->SetHiddenInGame(false, true);
+		}
+
+		InteractionHelper->SetWorldLocation(Params.Location);
+	}
+	else
+	{
+		if (!InteractionHelper->bHiddenInGame)
+		{
+			InteractionHelper->SetHiddenInGame(true, true);
+		}
+	}
 }
 
 void AHand::OnDropPressed()
@@ -124,6 +146,12 @@ void AHand::OnDropPressed()
 
 void AHand::OnGrabPressed()
 {
+	if (GetPlayerPawn()->bDead)
+	{
+		OnDeadGrabPressed();
+		return;
+	}
+
 	bWantsGrab = true;
 
 	//GEngine->AddOnScreenDebugMessage(0, 2.0f, FColor::Yellow, FString::Printf(TEXT("%s: Grab input pressed"), *GetName()));
@@ -140,11 +168,16 @@ void AHand::OnGrabPressed()
 			Grab(NearbyActor);
 		}
 	}
-	
 }
 
 void AHand::OnGrabReleased()
 {
+	if (GetPlayerPawn()->bDead)
+	{
+		OnDeadGrabReleased();
+		return;
+	}
+
 	bWantsGrab = false;
 
 	//GEngine->AddOnScreenDebugMessage(0, 2.0f, FColor::Yellow, FString::Printf(TEXT("%s: Grab input released"), *GetName()));
@@ -186,7 +219,9 @@ void AHand::UpdateNearbyActors()
 			continue;
 		}
 
-		if (!Actor->CanGrab(this))
+		FInteractionHelperReturnParams Params;
+
+		if (!Actor->CanInteract(this, Params))
 		{
 			continue;
 		}
@@ -221,9 +256,11 @@ void AHand::UpdateNearbyActors()
 		}
 	}
 
-	if (ClosestNearbyActor && !InteractingActor)
+	// If we are holding something already, just use that 
+	if (InteractingActor)
 	{
-		InteractionHelper->SetWorldLocation(ClosestNearbyActor->GetActorLocation());
+		ClosestNearbyActor = InteractingActor;
+		return;
 	}
 
 	ClosestNearbyActor = ClosestActor;
@@ -231,15 +268,6 @@ void AHand::UpdateNearbyActors()
 	if (ClosestNearbyActor != OldNearbyActor)
 	{
 		OnHoverActorChanged(ClosestNearbyActor);
-
-		if (!ClosestNearbyActor)
-		{
-			InteractionHelper->SetHiddenInGame(true, true);
-		}
-		else
-		{
-			InteractionHelper->SetHiddenInGame(false, true);
-		}
 	}
 }
 

@@ -41,19 +41,8 @@ void AInteractableActor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-bool AInteractableActor::CanGrab(const AHand* Hand)
+bool AInteractableActor::CanHolster() const
 {
-// 	if (InteractingHand && InteractingHand != Hand)
-// 	{
-// 		return false;
-// 	}
-
-	// Can't grab.. already holding
-	if (AttachedHand && AttachedHand == Hand)
-	{
-		return false;
-	}
-
 	return true;
 }
 
@@ -86,8 +75,6 @@ void AInteractableActor::EndGrab(AHand* Hand)
 
 	if (InteractingHands.Contains(Hand))
 	{
-		//GEngine->AddOnScreenDebugMessage(5, 2.0f, FColor::Yellow, FString::Printf(TEXT("%s: INTERACTING HAND RELEASED"), *GetName()), true, FVector2D(5.0f, 5.0f));
-
 		OnEndInteraction(Hand);
 	}
 }
@@ -97,6 +84,11 @@ void AInteractableActor::Drop(AHand* Hand)
 	if (Hand == AttachedHand)
 	{
 		OnDrop(Hand);
+	}
+
+	if (InteractingHands.Contains(Hand))
+	{
+		OnEndInteraction(Hand);
 	}
 }
 
@@ -117,6 +109,18 @@ AHand* AInteractableActor::GetBestInteractingHand()
 	}
 
 	return nullptr;
+}
+
+bool AInteractableActor::CanInteract(const AHand* InteractingHand, FInteractionHelperReturnParams& ReturnParams) const
+{
+	// Can't grab.. already holding
+	if (AttachedHand && AttachedHand == InteractingHand)
+	{
+		return false;
+	}
+
+	ReturnParams.Location = GetActorLocation();
+	return true;
 }
 
 void AInteractableActor::OnBeginPickup(AHand* Hand)
