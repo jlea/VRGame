@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "HandEnums.h"
 #include "Kismet/GameplayStaticsTypes.h"
 #include "MotionControllerComponent.h"
 #include "Hand.generated.h"
@@ -13,14 +14,6 @@ class USphereComponent;
 class APlayerController;
 class APlayerPawn;
 class UWidgetInteractionComponent;
-
-UENUM(BlueprintType)
-enum class EHandGripState : uint8
-{
-	Open,
-	CanGrab,
-	Grab
-};
 
 UCLASS()
 class VRTEST_API AHand : public AActor
@@ -34,6 +27,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Hand")
 	bool bWantsGrab;
@@ -78,8 +72,9 @@ protected:
 	UStaticMeshComponent*	InteractionHelper;
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+
+	//////////////////////////////////////////////////////////////////////////
+	//	Input
 
 	void OnDropPressed();
 	void OnGrabPressed();
@@ -87,6 +82,11 @@ public:
 
 	void OnTeleportPressed();
 	void OnTeleportReleased();
+
+	void OnDirectionalPadPressed(const EDirectionPadInput Direction);
+
+	//////////////////////////////////////////////////////////////////////////
+	//	Misc
 
 	UFUNCTION(BlueprintPure, Category = "Hand")
 	USceneComponent* GetWeaponMountOrigin() const { return WeaponMountOrigin; }

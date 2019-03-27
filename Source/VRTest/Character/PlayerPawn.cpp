@@ -109,6 +109,16 @@ void APlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 	InputComponent->BindAction("Teleport", IE_Pressed, this, &APlayerPawn::TeleportPressed);
 	InputComponent->BindAction("Teleport", IE_Released, this, &APlayerPawn::TeleportReleased);
+
+	InputComponent->BindAction<FDirectionalPadDelegate>("LeftDPadForward", IE_Pressed, this, &APlayerPawn::DirectionalPadLeftPressed, EDirectionPadInput::Forward);
+	InputComponent->BindAction<FDirectionalPadDelegate>("LeftDPadLeft", IE_Pressed, this, &APlayerPawn::DirectionalPadLeftPressed, EDirectionPadInput::Left);
+	InputComponent->BindAction<FDirectionalPadDelegate>("LeftDPadRight", IE_Pressed, this, &APlayerPawn::DirectionalPadLeftPressed, EDirectionPadInput::Right);
+	InputComponent->BindAction<FDirectionalPadDelegate>("LeftDPadBack", IE_Pressed, this, &APlayerPawn::DirectionalPadLeftPressed, EDirectionPadInput::Back);
+
+	InputComponent->BindAction<FDirectionalPadDelegate>("RightDPadForward", IE_Pressed, this, &APlayerPawn::DirectionalPadRightPressed, EDirectionPadInput::Forward);
+	InputComponent->BindAction<FDirectionalPadDelegate>("RightDPadLeft", IE_Pressed, this, &APlayerPawn::DirectionalPadRightPressed, EDirectionPadInput::Left);
+	InputComponent->BindAction<FDirectionalPadDelegate>("RightDPadRight", IE_Pressed, this, &APlayerPawn::DirectionalPadRightPressed, EDirectionPadInput::Right);
+	InputComponent->BindAction<FDirectionalPadDelegate>("RightDPadBack", IE_Pressed, this, &APlayerPawn::DirectionalPadRightPressed, EDirectionPadInput::Back);
 }
 
 FVector APlayerPawn::GetTargetLocation(AActor* RequestedBy /* = nullptr */) const
@@ -154,6 +164,16 @@ void APlayerPawn::TeleportPressed()
 void APlayerPawn::TeleportReleased()
 {
 	RightHand->OnTeleportReleased();
+}
+
+void APlayerPawn::DirectionalPadLeftPressed(const EDirectionPadInput Direction)
+{
+	LeftHand->OnDirectionalPadPressed(Direction);
+}
+
+void APlayerPawn::DirectionalPadRightPressed(const EDirectionPadInput Direction)
+{
+	RightHand->OnDirectionalPadPressed(Direction);
 }
 
 void APlayerPawn::SetScopeFirearm(AFirearm* Firearm)

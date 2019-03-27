@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GenericTeamAgentInterface.h"
 #include "GameFramework/Pawn.h"
+#include "Interactable/HandEnums.h"
 #include "PlayerPawn.generated.h"
 
 class AHand;
@@ -24,8 +25,9 @@ class VRTEST_API APlayerPawn : public APawn, public IGenericTeamAgentInterface
 public:
 	// Sets default values for this pawn's properties
 	APlayerPawn();
-
 protected:
+	DECLARE_DELEGATE_OneParam(FDirectionalPadDelegate, EDirectionPadInput);
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -59,8 +61,8 @@ public:
 	void TeleportPressed();
 	void TeleportReleased();
 
-	void BulletTimePressed();
-	void BulletTimeReleased();
+	void DirectionalPadLeftPressed(const EDirectionPadInput Direction);
+	void DirectionalPadRightPressed(const EDirectionPadInput Direction);
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Misc

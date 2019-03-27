@@ -321,6 +321,14 @@ void AHand::OnTeleportReleased()
 	bWantsTeleport = false;
 }
 
+void AHand::OnDirectionalPadPressed(const EDirectionPadInput Direction)
+{
+	if (InteractingActor)
+	{
+		InteractingActor->DirectionalPad(this, Direction);
+	}
+}
+
 void AHand::TryTeleport()
 {
 	if (bHasValidTeleportLocation)

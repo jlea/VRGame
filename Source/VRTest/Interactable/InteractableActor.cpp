@@ -92,6 +92,11 @@ void AInteractableActor::Drop(AHand* Hand)
 	}
 }
 
+void AInteractableActor::DirectionalPad(AHand* Hand, const EDirectionPadInput Input)
+{
+	OnDirectionalPad(Hand, Input);
+}
+
 AHand* AInteractableActor::GetBestInteractingHand()
 {
 	for (auto PossibleInteractingHand : InteractingHands)

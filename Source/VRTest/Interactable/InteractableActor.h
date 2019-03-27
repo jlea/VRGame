@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "HandEnums.h"
 #include "GameFramework/Actor.h"
 #include "InteractableActor.generated.h"
 
@@ -61,6 +62,7 @@ public:
 	void BeginGrab(AHand* Hand);
 	void EndGrab(AHand* Hand);	
 	void Drop(AHand* Hand);
+	void DirectionalPad(AHand* Hand, const EDirectionPadInput Input);
 
 	UFUNCTION(BlueprintPure, Category = "VR")
 	AHand*	GetAttachedHand() { return AttachedHand; }
@@ -77,6 +79,7 @@ protected:
 	virtual void OnBeginInteraction(AHand* Hand);
 	virtual void OnDrop(AHand* Hand);
 	virtual void OnEndInteraction(AHand* Hand);
+	virtual void OnDirectionalPad(AHand* Hand, const EDirectionPadInput Direction) { ; }
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "VR")
 	void ReceiveOnBeginPickup(AHand* Hand);
