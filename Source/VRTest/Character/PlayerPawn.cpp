@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PlayerPawn.h"
-#include "Firearm.h"
+#include "Weapons/Firearm.h"
 #include "Kismet/GameplayStatics.h"
 #include "Classes/Camera/CameraComponent.h"
 #include "Components/SceneCaptureComponent2D.h"
-#include "VRGameViewportClient.h"
-#include "Hand.h"
+#include "UI/VRGameViewportClient.h"
+#include "Interactable/Hand.h"
 
 // Sets default values
 APlayerPawn::APlayerPawn()

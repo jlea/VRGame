@@ -4,13 +4,13 @@
 #include "MotionControllerComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SphereComponent.h"
-#include "PlayerPawn.h"
+#include "Character/PlayerPawn.h"
 #include "DrawDebugHelpers.h"
-#include "VRGameState.h"
+#include "Gamemode/VRGameState.h"
 #include "Engine.h"
 #include "World/TeleportDestination.h"
 #include "WidgetInteractionComponent.h"
-#include "InteractableActor.h"
+#include "Interactable/InteractableActor.h"
 
 // Sets default values
 AHand::AHand()

@@ -52,6 +52,8 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "AI")
 	FGenericTeamId GetTeamId() const { return GetGenericTeamId(); }
+	
+	virtual bool LineOfSightTo(const AActor* Other, FVector ViewPoint = FVector(ForceInit), bool bAlternateChecks = false) const override;
 
 	virtual void UnPossess() override;
 	virtual void Possess(APawn* InPawn) override;

@@ -4,7 +4,7 @@
 #include "DrawDebugHelpers.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
-#include "InteractableActor.h"
+#include "Interactable/InteractableActor.h"
 
 UHolsterComponent::UHolsterComponent()
 {

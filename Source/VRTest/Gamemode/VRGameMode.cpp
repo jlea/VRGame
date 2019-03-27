@@ -4,9 +4,9 @@
 #include "EngineUtils.h"
 #include "VRGameState.h"
 #include "UI/VRHUD.h"
-#include "Spawner.h"
+#include "World/Spawner.h"
 #include "GameFramework/GameSession.h"
-#include "PlayerPawn.h"
+#include "Character/PlayerPawn.h"
 
 AVRGameMode::AVRGameMode()
 {

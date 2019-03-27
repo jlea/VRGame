@@ -4,7 +4,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "AIController.h"
 #include "Kismet/GameplayStatics.h"
-#include "ExtendedCharacter.h"
+#include "Character/ExtendedCharacter.h"
 
 // Sets default values
 ASpawner::ASpawner()

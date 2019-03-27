@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InteractableActor.h"
+#include "Interactable/InteractableActor.h"
 #include "Firearm.generated.h"
 
 class USkeletalMeshComponent;

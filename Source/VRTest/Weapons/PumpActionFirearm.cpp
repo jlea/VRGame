@@ -2,7 +2,7 @@
 
 #include "PumpActionFirearm.h"
 #include "DrawDebugHelpers.h"
-#include "Hand.h"
+#include "Interactable/Hand.h"
 
 APumpActionFirearm::APumpActionFirearm()
 {

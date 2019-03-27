@@ -2,7 +2,7 @@
 
 #include "VRGameState.h"
 #include "Kismet/GameplayStatics.h"
-#include "ExtendedCharacter.h"
+#include "Character/ExtendedCharacter.h"
 
 AVRGameState::AVRGameState()
 {

@@ -2,7 +2,7 @@
 
 #include "ImpactEffect.h"
 #include "Sound/SoundCue.h"
-#include "ExtendedCharacter.h"
+#include "Character/ExtendedCharacter.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "Kismet/GameplayStatics.h"
 

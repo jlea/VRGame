@@ -7,7 +7,7 @@
 #include "Firearm.h"
 #include "Components/BoxComponent.h"
 #include "DrawDebugHelpers.h"
-#include "Hand.h"
+#include "Interactable/Hand.h"
 #include "Components/StaticMeshComponent.h"
 
 // Sets default values

@@ -2,7 +2,7 @@
 
 #include "InteractableActor.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "VRGameState.h"
+#include "Gamemode/VRGameState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "Hand.h"

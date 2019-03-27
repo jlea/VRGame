@@ -30,9 +30,10 @@ protected:
 
 	virtual void PostInitProperties() override;
 
+public:
 	UFUNCTION(BlueprintCallable, Category = "Spawner")
 	void SpawnPawn();
-
+protected:
 	UFUNCTION()
 	void PawnKilled(AExtendedCharacter* Character, AController* Killer, const FHitResult& HitResult);
 

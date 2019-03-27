@@ -8,7 +8,7 @@
 #include "DrawDebugHelpers.h"
 #include "Sound/SoundCue.h"
 #include "Kismet/GameplayStatics.h"
-#include "Hand.h"
+#include "Interactable/Hand.h"
 
 // Sets default values
 AMagazine::AMagazine()

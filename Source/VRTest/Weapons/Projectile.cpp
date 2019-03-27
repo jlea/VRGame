@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Projectile.h"
+#include "Weapons/Projectile.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemComponent.h"
-#include "ExtendedCharacter.h"
+#include "Character/ExtendedCharacter.h"
 #include "FX/ImpactEffect.h"
 #include "Components/SphereComponent.h"
 #include "Components/SkeletalMeshComponent.h"
