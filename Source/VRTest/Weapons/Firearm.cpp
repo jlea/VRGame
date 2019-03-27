@@ -293,6 +293,7 @@ bool AFirearm::CanInteract(const AHand* InteractingHand, FInteractionHelperRetur
 	{
 		Params.Location = GetActorLocation();
 		Params.Tag = TEXT("Trigger");
+		Params.bRenderHelper = false;
 		return true;
 	}
 	else
