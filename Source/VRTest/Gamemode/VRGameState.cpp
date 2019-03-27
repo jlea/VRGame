@@ -41,6 +41,7 @@ void AVRGameState::Tick(float DeltaSeconds)
 void AVRGameState::AddSpawnedCharacter(AExtendedCharacter* Character)
 {
 	Character->OnKilledDelegate.AddDynamic(this, &ThisClass::OnCharacterKilled);
+	Character->OnDamagedDelegate.AddDynamic(this, &ThisClass::OnCharacterDamaged);
 
 	SpawnedCharacters.Add(Character);
 }
@@ -78,6 +79,14 @@ void AVRGameState::OnCharacterKilled(AExtendedCharacter* Character, AController*
 	if (HitEvent.BoneName == Character->HeadBone)
 	{
 		NumHeadshots++;
+	}
+}
+
+void AVRGameState::OnCharacterDamaged(AExtendedCharacter* Character, AController* Damager, const FHitResult& HitEvent)
+{
+	if (Damager->IsLocalPlayerController())
+	{
+		NumPlayerShotsHit++;
 	}
 }
 

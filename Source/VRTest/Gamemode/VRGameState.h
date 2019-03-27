@@ -42,6 +42,9 @@ private:
 	UFUNCTION()
 	void OnCharacterKilled(AExtendedCharacter* Character, AController* Killer, const FHitResult& HitEvent);
 	
+	UFUNCTION()
+	void OnCharacterDamaged(AExtendedCharacter* Character, AController* Damager, const FHitResult& HitEvent);
+
 	//////////////////////////////////////////////////////////////////////////
 	//	Bullet time
 protected:
@@ -91,6 +94,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Scoring")
 	int32 NumPlayerShotsFired;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Scoring")
+	int32 NumPlayerShotsHit;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Scoring")
 	int32 NumHeadshots;
