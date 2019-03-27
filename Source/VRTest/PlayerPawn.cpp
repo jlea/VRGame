@@ -198,8 +198,6 @@ void APlayerPawn::Kill(AController* Killer, AActor *DamageCauser, struct FDamage
 	bDead = true;
 	DeathTimestamp = GetWorld()->GetTimeSeconds();
 
-	OnKilled(Killer, DamageCauser, DamageEvent);
-
 	FHitResult HitResult;
 	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
 	{
@@ -211,5 +209,10 @@ void APlayerPawn::Kill(AController* Killer, AActor *DamageCauser, struct FDamage
 	}
 
 	OnKilledDelegate.Broadcast(this, Killer, HitResult);
+
+	LeftHand->OnDropPressed();
+	RightHand->OnDropPressed();
+
+	OnKilled(Killer, DamageCauser, DamageEvent);
 }
 

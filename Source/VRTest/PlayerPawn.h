@@ -11,8 +11,10 @@ class AHand;
 class AFirearm;
 class UCameraComponent;
 class UTextureRenderTarget2D;
+class ATeleportDestination;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FPlayerKilledDelegate, APlayerPawn*, Character, AController*, Killer, const FHitResult&, HitEvent);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FPlayerFirearmEventDelegate, APlayerPawn*, Character, AFirearm*, Firearm);
 
 UCLASS()
 class VRTEST_API APlayerPawn : public APawn, public IGenericTeamAgentInterface
@@ -87,10 +89,10 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Hand")
 	TSubclassOf<AHand>	HandClass;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, Category = "Hand")
 	AHand* LeftHand;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, Category = "Hand")
 	AHand* RightHand;
 
 	UPROPERTY()
@@ -101,6 +103,13 @@ public:
 
 	FVector LastScopePosition;
 	FRotator LastScopeRotation;
+
+	UPROPERTY()
+	ATeleportDestination* LastTeleportDestination;
+
+	/* Called when we shoot a gun */
+	UPROPERTY(BlueprintAssignable)
+	FPlayerFirearmEventDelegate OnFirearmFire;
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Damage

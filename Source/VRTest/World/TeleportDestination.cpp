@@ -19,7 +19,6 @@ ATeleportDestination::ATeleportDestination()
 	bDisableOnTeleport = true;
 	bStartEnabled = false;
 	bHovered = false;
-	bPlayerOverlapping = false;
 	FinishedSpawners = 0;
 
 	RootComponent = CollisionSphere;
@@ -68,34 +67,34 @@ void ATeleportDestination::TeleportToDestination(APlayerPawn* Pawn, AHand* Hand)
 		TeleportDestination = PostTraceHit.ImpactPoint;
 	}
 
-
 	// Hide our current location 
-	TSet<AActor*>	OverlappingActors;
-	Pawn->GetOverlappingActors(OverlappingActors, ATeleportDestination::StaticClass());
-
-	for (auto OverlappingActor : OverlappingActors)
+	auto LastTeleportDestination = Pawn->LastTeleportDestination;
+	if(LastTeleportDestination)
 	{
-		auto OverlappingDestination = Cast<ATeleportDestination>(OverlappingActor);
-		if (OverlappingDestination)
-		{
-			OverlappingDestination->bPlayerOverlapping = false;
-			OverlappingDestination->OnPlayerLeft();
-		}
+		LastTeleportDestination->bHovered = false;
+		LastTeleportDestination->OnPlayerLeft();
 	}
 
 	Pawn->SetActorLocation(TeleportDestination);
 	Pawn->SetActorRotation(GetActorRotation());
 
+	Pawn->LastTeleportDestination = this;
+
 	Pawn->OnTeleported(TeleportDestination);
 
 	OnTeleportedDelegate.Broadcast(this);
 
-	bPlayerOverlapping = true;
 	OnPlayerArrived();
 
 	if (bDisableOnTeleport)
 	{
 		SetDestinationEnabled(false);
+	}
+
+	// Trigger any required spawns
+	for (auto Spawner : SpawnersToTriggerOnArrival)
+	{
+		Spawner->SpawnPawn();
 	}
 }
 
@@ -103,8 +102,6 @@ void ATeleportDestination::SetDestinationEnabled(bool bInEnabled)
 {
 	bEnabled = bInEnabled;
 
-	UE_LOG(LogTemp, Warning, TEXT("%d"), bEnabled);
-	
 	if (bEnabled)
 	{
 		SetActorEnableCollision(true);

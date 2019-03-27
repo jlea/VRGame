@@ -64,6 +64,10 @@ public:
 	UPROPERTY(EditInstanceOnly, Category = "Teleport")
 	TArray<ASpawner*>	LinkedSpawners;
 
+	/* These spawners will trigger on arrival at this location */
+	UPROPERTY(EditInstanceOnly, Category = "Teleport")
+	TArray<ASpawner*>	SpawnersToTriggerOnArrival;
+
 	UFUNCTION()
 	void OnSpawnerFinished(ASpawner* Spawner);
 
@@ -81,6 +85,4 @@ private:
 	int8 FinishedSpawners;
 
 	bool bEnabled;
-
-	bool bPlayerOverlapping;
 };
