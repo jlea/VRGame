@@ -101,6 +101,7 @@ public:
 	virtual void OnEndInteraction(AHand* Hand) override;
 	virtual void OnBeginPickup(AHand* Hand) override;
 	virtual void OnDrop(AHand* Hand) override;
+	virtual void OnDirectionalPad(AHand* Hand, const EDirectionPadInput Direction) override;
 
 	UFUNCTION(BlueprintPure, Category = "Weapon")
 	AMagazine*	GetLoadedMagazine() { return LoadedMagazine; }

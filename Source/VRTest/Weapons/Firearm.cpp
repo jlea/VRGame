@@ -463,6 +463,24 @@ void AFirearm::OnDrop(AHand* Hand)
 	OnFirearmDropped.Broadcast(this);
 }
 
+void AFirearm::OnDirectionalPad(AHand* Hand, const EDirectionPadInput Direction)
+{
+	if (Hand->HandType == EControllerHand::Right)
+	{
+		if (Direction == EDirectionPadInput::Left)
+		{
+			EjectLoadedMagazine();
+		}
+	}
+	else
+	{
+		if (Direction == EDirectionPadInput::Right)
+		{
+			EjectLoadedMagazine();
+		}
+	}
+}
+
 bool AFirearm::AttachToCharacter(AExtendedCharacter* NewCharacter)
 {
 	if (!NewCharacter)
@@ -737,6 +755,11 @@ void AFirearm::LoadMagazine(AMagazine* NewMagazine)
 bool AFirearm::EjectLoadedMagazine()
 {
 	if (!LoadedMagazine)
+	{
+		return false;
+	}
+
+	if (bHasInternalMagazine)
 	{
 		return false;
 	}
