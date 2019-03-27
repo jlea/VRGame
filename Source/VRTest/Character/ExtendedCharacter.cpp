@@ -333,6 +333,8 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 		}
 	}
 
+	OnDamagedDelegate.Broadcast(this, EventInstigator, HitResult);
+
 	return FinalDamage;
 }
 

@@ -71,6 +71,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Character")
 	bool bDead;
+	
+	UPROPERTY(BlueprintAssignable)
+	FCharacterKilledDelegate OnDamagedDelegate;
 
 	UPROPERTY(BlueprintAssignable)
 	FCharacterKilledDelegate OnKilledDelegate;
