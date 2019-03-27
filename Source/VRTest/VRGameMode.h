@@ -8,6 +8,7 @@
 
 class AExtendedCharacter;
 class ASpawner;
+class AFirearm;
 
 /**
  * 
@@ -26,6 +27,9 @@ public:
 
 	virtual void ResetLevel() override;
 	virtual void BeginPlay() override;
+
+	UFUNCTION()
+	void OnPlayerFirearmFire(APlayerPawn* Player, AFirearm* Firearm);
 
 	UFUNCTION()
 	void OnPlayerKilled(APlayerPawn* Player, AController* Killer, const FHitResult& HitEvent);

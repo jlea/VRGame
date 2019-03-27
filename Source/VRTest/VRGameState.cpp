@@ -10,8 +10,11 @@ AVRGameState::AVRGameState()
 	BulletTimeModifier = 0.2f;
 	BulletTimeInterpSpeed = 8.0f;
 	BulletTimeDuration = 3.0f;
-	NumDeadCharacters = 0;
 	bBulletTime = false;
+
+	BeginScoringTimestamp = -1.0f;
+
+	NumDeadCharacters = 0;
 
 	PrimaryActorTick.bCanEverTick = true;
 }
@@ -71,10 +74,52 @@ void AVRGameState::OnCharacterKilled(AExtendedCharacter* Character, AController*
 			TriggerBulletTime(BulletTimeDuration);
 		}
 	}
+
+	if (HitEvent.BoneName == Character->HeadBone)
+	{
+		NumHeadshots++;
+	}
 }
 
 void AVRGameState::FinishBulletTime()
 {
 	UGameplayStatics::SetGlobalPitchModulation(this, 1.0f, 1.0f);
 	bBulletTime = false;
+}
+
+void AVRGameState::ResetScores()
+{
+	NumPlayerShotsFired = 0;
+	NumHeadshots = 0;
+	NumDeadCharacters = 0;
+}
+
+void AVRGameState::BeginScoring()
+{
+	BeginScoringTimestamp = GetWorld()->GetTimeSeconds();
+
+	ResetScores();
+}
+
+void AVRGameState::FinishScoring()
+{
+	FinishScoringTimestamp = GetWorld()->GetTimeSeconds();
+	
+	LastMatchDuration = FinishScoringTimestamp - BeginScoringTimestamp;
+}
+
+float AVRGameState::GetTotalScore() const
+{
+	float TotalScore = 0;
+
+	// Todo: transfer to member variables
+	int32 PointsPerKill = 10;
+	int32 PointsPerHeadshot = 5;
+	float PointsDeductedPerShot = 0.1;
+
+	TotalScore += (PointsPerKill * NumDeadCharacters);
+	TotalScore += (PointsPerHeadshot * NumHeadshots);
+	TotalScore -= (PointsDeductedPerShot * NumPlayerShotsFired);
+
+	return TotalScore;
 }

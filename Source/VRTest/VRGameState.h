@@ -15,6 +15,8 @@ class AExtendedCharacter;
 UCLASS()
 class VRTEST_API AVRGameState : public AGameStateBase
 {
+	friend class AVRGameMode;
+
 	AVRGameState();
 
 	GENERATED_BODY()
@@ -70,5 +72,32 @@ protected:
 	UPROPERTY()
 	FTimerHandle TimerHandle_BulletTime;
 
+	//////////////////////////////////////////////////////////////////////////
+	//	Scoring
+
+	void ResetScores();
+
+	UFUNCTION(BlueprintCallable, Category = "Scoring")
+	void BeginScoring();
+	
+	UFUNCTION(BlueprintCallable, Category = "Scoring")
+	void FinishScoring();
+
+	UFUNCTION(BlueprintPure, Category = "Scoring")
+	float GetTotalScore() const;
+
+	float BeginScoringTimestamp;
+	float FinishScoringTimestamp;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Scoring")
+	int32 NumPlayerShotsFired;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Scoring")
+	int32 NumHeadshots;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Scoring")
 	int32 NumDeadCharacters;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Scoring")
+	float LastMatchDuration;
 };

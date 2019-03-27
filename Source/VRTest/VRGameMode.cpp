@@ -44,14 +44,26 @@ void AVRGameMode::BeginPlay()
 	for (TActorIterator<APlayerPawn> ActorItr(GetWorld()); ActorItr; ++ActorItr)
 	{
 		ActorItr->OnKilledDelegate.AddDynamic(this, &ThisClass::OnPlayerKilled);
+		ActorItr->OnFirearmFire.AddDynamic(this, &ThisClass::OnPlayerFirearmFire);
+	}
+}
+
+void AVRGameMode::OnPlayerFirearmFire(APlayerPawn* Player, AFirearm* Firearm)
+{
+	auto VRGameState = Cast<AVRGameState>(GetWorld()->GetGameState());
+	if (VRGameState)
+	{
+		VRGameState->NumPlayerShotsFired++;
 	}
 }
 
 void AVRGameMode::OnPlayerKilled(APlayerPawn* Player, AController* Killer, const FHitResult& HitEvent)
 {
-	FTimerHandle TimerHandle_LevelReset;
-
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_LevelReset, this, &ThisClass::RestartGame, 7.0f);
+	auto VRGameState = Cast<AVRGameState>(GetWorld()->GetGameState());
+	if (VRGameState)
+	{
+		VRGameState->FinishScoring();
+	}
 }
 
 void AVRGameMode::OnAllPawnsKilledForSpawner(ASpawner* Spawner)
