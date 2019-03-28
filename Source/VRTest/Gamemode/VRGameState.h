@@ -93,7 +93,7 @@ protected:
 	float FinishScoringTimestamp;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Scoring")
-	int32 NumPlayerShotsFired;
+	TMap<FString,int32> NumShotsPerWeapon;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Scoring")
 	int32 NumPlayerShotsHit;

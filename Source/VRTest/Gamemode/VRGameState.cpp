@@ -84,7 +84,7 @@ void AVRGameState::OnCharacterKilled(AExtendedCharacter* Character, AController*
 
 void AVRGameState::OnCharacterDamaged(AExtendedCharacter* Character, AController* Damager, const FHitResult& HitEvent)
 {
-	if (Damager->IsLocalPlayerController())
+	if (Damager && Damager->IsLocalPlayerController())
 	{
 		NumPlayerShotsHit++;
 	}
@@ -98,7 +98,7 @@ void AVRGameState::FinishBulletTime()
 
 void AVRGameState::ResetScores()
 {
-	NumPlayerShotsFired = 0;
+	NumShotsPerWeapon.Empty();
 	NumHeadshots = 0;
 	NumDeadCharacters = 0;
 }
@@ -128,7 +128,14 @@ float AVRGameState::GetTotalScore() const
 
 	TotalScore += (PointsPerKill * NumDeadCharacters);
 	TotalScore += (PointsPerHeadshot * NumHeadshots);
-	TotalScore -= (PointsDeductedPerShot * NumPlayerShotsFired);
+
+	int32 TotalShots = 0;
+	for (auto Weapon : NumShotsPerWeapon)
+	{
+		TotalShots += Weapon.Value;
+	}
+
+	TotalScore -= (PointsDeductedPerShot * TotalShots);
 
 	return TotalScore;
 }

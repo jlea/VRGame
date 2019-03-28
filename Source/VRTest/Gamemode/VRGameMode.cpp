@@ -5,6 +5,7 @@
 #include "VRGameState.h"
 #include "UI/VRHUD.h"
 #include "World/Spawner.h"
+#include "Weapons/Firearm.h"
 #include "GameFramework/GameSession.h"
 #include "Character/PlayerPawn.h"
 
@@ -53,17 +54,15 @@ void AVRGameMode::OnPlayerFirearmFire(APlayerPawn* Player, AFirearm* Firearm)
 	auto VRGameState = Cast<AVRGameState>(GetWorld()->GetGameState());
 	if (VRGameState)
 	{
-		VRGameState->NumPlayerShotsFired++;
+		FString ClassName = Firearm->GetClass()->GetName();
+		int32 Shots = VRGameState->NumShotsPerWeapon.FindRef(ClassName) + 1;
+
+		VRGameState->NumShotsPerWeapon.Emplace(ClassName, Shots);
 	}
 }
 
 void AVRGameMode::OnPlayerKilled(APlayerPawn* Player, AController* Killer, const FHitResult& HitEvent)
 {
-	auto VRGameState = Cast<AVRGameState>(GetWorld()->GetGameState());
-	if (VRGameState)
-	{
-		VRGameState->FinishScoring();
-	}
 }
 
 void AVRGameMode::OnAllPawnsKilledForSpawner(ASpawner* Spawner)
