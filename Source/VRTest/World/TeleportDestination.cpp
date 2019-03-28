@@ -72,6 +72,7 @@ void ATeleportDestination::TeleportToDestination(APlayerPawn* Pawn, AHand* Hand)
 	if(LastTeleportDestination)
 	{
 		LastTeleportDestination->bHovered = false;
+		LastTeleportDestination->OnTeleportUnhovered(Pawn, Hand);
 		LastTeleportDestination->OnPlayerLeft();
 	}
 
