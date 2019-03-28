@@ -64,30 +64,43 @@ void ACartridge::Tick(float DeltaTime)
 	if (AttachedHand)
 	{
 		// Find the closest weapon we have
-		for (auto ClosestActor : AttachedHand->GetNearbyActors())
+		for (auto ClosestActor : AttachedHand->GetNearbyActors(false))
 		{
-			auto Firearm = Cast<AFirearm>(ClosestActor);
-			if (Firearm)
+			AMagazine* BestMagazine = nullptr;
+
+			auto NearbyMagazine = Cast<AMagazine>(ClosestActor);
+			if (NearbyMagazine)
 			{
-				if (!Firearm->bHasInternalMagazine)
+				BestMagazine = NearbyMagazine;
+			}
+			else
+			{
+				auto Firearm = Cast<AFirearm>(ClosestActor);
+				if (Firearm)
+				{
+					if (!Firearm->bHasInternalMagazine)
+					{
+						continue;
+					}
+
+					auto PotentialMagazine = Firearm->GetLoadedMagazine();
+					if (PotentialMagazine)
+					{
+						BestMagazine = PotentialMagazine;
+					}
+				}
+			}
+
+			if (BestMagazine)
+			{
+				if (!CanLoadIntoMagazine(BestMagazine))
 				{
 					continue;
 				}
 
-				auto PotentialMagazine = Firearm->GetLoadedMagazine();
-				if (!PotentialMagazine)
+				if (BestMagazine->IsReadyToLoadCartridge(this))
 				{
-					continue;
-				}
-
-				if (!CanLoadIntoMagazine(PotentialMagazine))
-				{
-					continue;
-				}
-
-				if (PotentialMagazine->IsReadyToLoadCartridge(this))
-				{
-					LoadableMagazine = PotentialMagazine;
+					LoadableMagazine = BestMagazine;
 					break;
 				}
 			}

@@ -199,6 +199,7 @@ void AHand::UpdateNearbyActors()
 	AInteractableActor*	OldNearbyActor = ClosestNearbyActor;
 
 	NearbyActors.Empty();
+	NearbyInteractableActors.Empty();
 
 	const float SearchDistance = SphereCollision->GetScaledSphereRadius();
 	const FVector HandLocation = GetHandSelectionOrigin();
@@ -219,6 +220,8 @@ void AHand::UpdateNearbyActors()
 			continue;
 		}
 
+		NearbyActors.Add(Actor);
+
 		FInteractionHelperReturnParams Params;
 
 		if (!Actor->CanInteract(this, Params))
@@ -226,7 +229,7 @@ void AHand::UpdateNearbyActors()
 			continue;
 		}
 
-		NearbyActors.Add(Actor);
+		NearbyInteractableActors.Add(Actor);
 
 		if (Actor->InteractPriority < BestPriority)
 		{

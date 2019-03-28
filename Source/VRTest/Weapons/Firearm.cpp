@@ -329,19 +329,6 @@ bool AFirearm::CanInteract(const AHand* InteractingHand, FInteractionHelperRetur
 				return true;
 			}
 		}
-
-		if (!MagazineAttachSocket.IsNone())
-		{
-			const FVector MagazineBoneLocation = FirearmMesh->GetSocketLocation(MagazineAttachSocket);
-
-			auto HeldMagazine = Cast<AMagazine>(InteractingHand->GetInteractingActor());
-			if (HeldMagazine)
-			{
-				Params.Tag = TEXT("LoadMagazine");
-				Params.Location = MagazineBoneLocation;
-				return true;
-			}
-		}
 	}
 
 	if (!AttachedHand)

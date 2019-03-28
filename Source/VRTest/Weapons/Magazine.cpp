@@ -140,7 +140,7 @@ void AMagazine::Tick(float DeltaTime)
 		if (AttachedHand)
 		{
 			// Find the closest weapon we have
-			for (auto ClosestActor : AttachedHand->GetNearbyActors())
+			for (auto ClosestActor : AttachedHand->GetNearbyActors(false))
 			{
 				auto Firearm = Cast<AFirearm>(ClosestActor);
 				if (Firearm)
@@ -173,6 +173,12 @@ bool AMagazine::IsReadyToLoadCartridge(ACartridge* Cartridge)
 
 	if (AttachedFirearm)
 	{
+		// Can't load a cartridge into a closed off magazine
+		if (!AttachedFirearm->bHasInternalMagazine)
+		{
+			return false;
+		}
+
 		if (OverlappingComponents.Contains(AttachedFirearm->MagazineCollisionBox))
 		{
 			return true;

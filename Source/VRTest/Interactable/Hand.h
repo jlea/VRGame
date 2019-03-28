@@ -116,9 +116,9 @@ public:
 	AInteractableActor*	GetInteractingActor() const { return InteractingActor; }
 
 	UFUNCTION(BlueprintPure, Category = "Hand")
-	TArray<AInteractableActor*>	GetNearbyActors()
+	TArray<AInteractableActor*>	GetNearbyActors(const bool bInteractableOnly)
 	{
-		return NearbyActors;
+		return bInteractableOnly ? NearbyInteractableActors : NearbyActors;
 	}
 
 	UFUNCTION(BlueprintPure, Category = "Hand")
@@ -140,6 +140,9 @@ private:
 
 	UPROPERTY()
 	TArray<AInteractableActor*> NearbyActors;
+
+	UPROPERTY()
+	TArray<AInteractableActor*> NearbyInteractableActors;
 
 	FTransform CachedMeshTransform;
 
