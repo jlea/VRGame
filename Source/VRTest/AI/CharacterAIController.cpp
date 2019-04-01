@@ -502,8 +502,8 @@ int32 ACharacterAIController::GetPriorityForTarget(APawn* Target)
 
 void ACharacterAIController::OnHearNoise(APawn *OtherActor, const FVector &Location, float Volume)
 {
-	auto Player = Cast<APlayerPawn>(OtherActor);
-	if (!Player)
+	auto HeardPawn = Cast<APawn>(OtherActor);
+	if (!HeardPawn)
 	{
 		return;
 	}
@@ -513,9 +513,9 @@ void ACharacterAIController::OnHearNoise(APawn *OtherActor, const FVector &Locat
 // 		SetFocalPoint(Location);
 // 	}
 
-	if (ShouldSetAsEnemy(Player))
+	if (ShouldSetAsEnemy(HeardPawn))
 	{
-		SetNewEnemy(Player);
+		SetNewEnemy(HeardPawn);
 	}
 
 // 	AFPSCharacter* CharacterEmitter = Cast<AFPSCharacter>(OtherActor);
