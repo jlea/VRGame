@@ -3,6 +3,7 @@
 #include "Spawner.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "AIController.h"
+#include "Engine/TargetPoint.h"
 #include "Kismet/GameplayStatics.h"
 #include "Character/ExtendedCharacter.h"
 

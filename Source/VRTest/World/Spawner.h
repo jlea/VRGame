@@ -8,6 +8,7 @@
 
 class AExtendedCharacter;
 class USkeletalMeshComponent;
+class ATargetPoint;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FSpawnerKilledEvent, ASpawner*, Spawner, AExtendedCharacter*, Character, AController*, Killer, const FHitResult&, HitResult);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSpawnerAllKilledEvent, ASpawner*, Spawner);
@@ -59,7 +60,7 @@ protected:
 	float RespawnTime;
 
 	UPROPERTY(EditInstanceOnly, Category = "Spawner")
-	AActor* TargetLocation;
+	ATargetPoint* TargetLocation;
 
 	UPROPERTY(BlueprintReadOnly)
 	TArray<AExtendedCharacter*>	SpawnedPawns;
