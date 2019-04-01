@@ -116,16 +116,18 @@ AHand* AInteractableActor::GetBestInteractingHand()
 	return nullptr;
 }
 
-bool AInteractableActor::CanInteract(const AHand* InteractingHand, FInteractionHelperReturnParams& ReturnParams) const
+void AInteractableActor::GetInteractionConditions(const AHand* InteractingHand, TArray<FInteractionHelperReturnParams>& ReturnParams) const
 {
+	FInteractionHelperReturnParams InteractionParams;
+	InteractionParams.Location = GetActorLocation();
+
 	// Can't grab.. already holding
 	if (AttachedHand && AttachedHand == InteractingHand)
 	{
-		return false;
+		InteractionParams.bCanUse = false;
 	}
 
-	ReturnParams.Location = GetActorLocation();
-	return true;
+	ReturnParams.Add(InteractionParams);
 }
 
 void AInteractableActor::OnBeginPickup(AHand* Hand)

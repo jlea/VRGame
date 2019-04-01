@@ -11,31 +11,6 @@ class AHand;
 class AHUD;
 class USoundCue;
 
-UENUM(BlueprintType)
-enum class EInteractPriority : uint8
-{
-	Low,
-	Medium,
-	High
-};
-
-USTRUCT(BlueprintType)
-struct FInteractionHelperReturnParams
-{
-	GENERATED_USTRUCT_BODY()
-
-	FVector Location;
-	FString Tag;
-	bool	bRenderHelper;
-
-	/** defaults */
-	FInteractionHelperReturnParams()
-	{
-		bRenderHelper = true;
-	}
-};
-
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractableActorEvent, AInteractableActor*, InteractableActor);
 
 UCLASS()
@@ -70,9 +45,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "VR")
 	AHand*	GetBestInteractingHand();
 
-	/* Outputs the location of the interaction and tag, which can be used to hook in gameplay events when interacting */
+	/* Returns useful properties for our interactions, which can be used to hook in gameplay events when interacting */
 	UFUNCTION(BlueprintCallable, Category = "VR")
-	virtual bool CanInteract(const AHand* InteractingHand, FInteractionHelperReturnParams& ReturnParams) const;
+	virtual void GetInteractionConditions(const AHand* InteractingHand, TArray<FInteractionHelperReturnParams>& ReturnParams) const;
 
 protected:
 	virtual void OnBeginPickup(AHand* Hand);

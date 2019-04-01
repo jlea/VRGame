@@ -21,7 +21,7 @@ public:
 	virtual void BeginPlay() override;
 
 	virtual bool CanHolster() const override; 
-	virtual bool CanInteract(const AHand* InteractingHand, FInteractionHelperReturnParams& Params) const override;
+	virtual void GetInteractionConditions(const AHand* InteractingHand, TArray<FInteractionHelperReturnParams>& Params) const override;
 
 	virtual void OnBeginPickup(AHand* Hand) override;
 	virtual void OnDrop(AHand* Hand) override;

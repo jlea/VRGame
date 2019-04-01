@@ -14,6 +14,7 @@ class USphereComponent;
 class APlayerController;
 class APlayerPawn;
 class UWidgetInteractionComponent;
+class UInteractionHelperComponent;
 
 UCLASS()
 class VRTEST_API AHand : public AActor
@@ -69,7 +70,10 @@ protected:
 	USphereComponent*	SphereCollision;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Hand")
-	UStaticMeshComponent*	InteractionHelper;
+	TSubclassOf<UInteractionHelperComponent>	InteractionHelperClass;
+
+	UPROPERTY()
+	TArray<UInteractionHelperComponent*>	InteractionHelpers;
 
 public:	
 

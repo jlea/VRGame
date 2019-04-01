@@ -28,7 +28,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	virtual bool CanInteract(const AHand* InteractingHand, FInteractionHelperReturnParams& Params) const override;
+	virtual void GetInteractionConditions(const AHand* InteractingHand, TArray<FInteractionHelperReturnParams>& Params) const override;
 
 	virtual void OnDrop(AHand* Hand) override;
 

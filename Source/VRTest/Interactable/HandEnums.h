@@ -21,3 +21,37 @@ enum class EHandGripState : uint8
 	CanGrab,
 	Grab
 };
+
+UENUM(BlueprintType)
+enum class EInteractPriority : uint8
+{
+	Low,
+	Medium,
+	High
+};
+
+USTRUCT(BlueprintType)
+struct FInteractionHelperReturnParams
+{
+	GENERATED_USTRUCT_BODY()
+
+		UPROPERTY(BlueprintReadOnly)
+		FVector Location;
+
+	UPROPERTY(BlueprintReadOnly)
+		FString Tag;
+
+	UPROPERTY(BlueprintReadOnly)
+		bool	bRenderHelper;
+
+	UPROPERTY(BlueprintReadOnly)
+		bool	bCanUse;
+
+
+	/** defaults */
+	FInteractionHelperReturnParams()
+	{
+		bRenderHelper = true;
+		bCanUse = true;
+	}
+};

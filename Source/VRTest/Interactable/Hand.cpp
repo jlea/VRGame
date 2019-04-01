@@ -10,6 +10,7 @@
 #include "Engine.h"
 #include "World/TeleportDestination.h"
 #include "WidgetInteractionComponent.h"
+#include "Interactable/InteractionHelperComponent.h"
 #include "Interactable/InteractableActor.h"
 
 // Sets default values
@@ -23,11 +24,7 @@ AHand::AHand()
 
 	MotionController = CreateDefaultSubobject<UMotionControllerComponent>("MotionController");
 	MotionController->SetupAttachment(HandOrigin);
-
-	InteractionHelper = CreateDefaultSubobject<UStaticMeshComponent>("InteractionHelper");
-	InteractionHelper->SetupAttachment(HandOrigin);
-	InteractionHelper->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
+	
 	SphereCollision = CreateDefaultSubobject<USphereComponent>("SphereCollision");
 	SphereCollision->SetupAttachment(MotionController);
 
@@ -55,6 +52,18 @@ void AHand::BeginPlay()
 	}
 
 	CachedMeshTransform = HandMesh->GetRelativeTransform();
+
+	// Create some interaction helpers
+	const int NumHelpers = 5;
+	for (int i = 0; i < NumHelpers; i++)
+	{
+		UInteractionHelperComponent* InteractionHelper = NewObject<UInteractionHelperComponent>(this, InteractionHelperClass);
+		InteractionHelper->RegisterComponentWithWorld(GetWorld());
+		InteractionHelper->CreationMethod = EComponentCreationMethod::UserConstructionScript;
+		InteractionHelper->AttachToComponent(HandOrigin, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		
+		InteractionHelpers.Add(InteractionHelper);
+	}
 }
 
 APlayerController* AHand::GetPlayerController()
@@ -111,24 +120,34 @@ void AHand::Tick(float DeltaTime)
 		}
 	}
 
-	FInteractionHelperReturnParams Params;
-
-	const bool bShouldDrawHelper = ClosestNearbyActor && ClosestNearbyActor->CanInteract(this, Params) && Params.bRenderHelper;
-
-	if(bShouldDrawHelper)
+	if (ClosestNearbyActor)
 	{
-		if (InteractionHelper->bHiddenInGame)
-		{
-			InteractionHelper->SetHiddenInGame(false, true);
-		}
+		TArray<FInteractionHelperReturnParams> Params;
 
-		InteractionHelper->SetWorldLocation(Params.Location);
-	}
-	else
-	{
-		if (!InteractionHelper->bHiddenInGame)
+		ClosestNearbyActor->GetInteractionConditions(this, Params);
+
+		//	Update the status of our interaction helpers
+
+		for (int i = 0; i < InteractionHelpers.Num(); i++)
 		{
-			InteractionHelper->SetHiddenInGame(true, true);
+			UInteractionHelperComponent* InteractionHelper = InteractionHelpers[i];
+
+			if (Params.IsValidIndex(i))
+			{
+				FInteractionHelperReturnParams Param = Params[i];
+				if (Param.bRenderHelper)
+				{
+					InteractionHelper->SetHelperParams(Param);
+				}
+				else
+				{
+					InteractionHelper->SetNoHelper();
+				}
+			}
+			else
+			{
+				InteractionHelper->SetNoHelper();
+			}
 		}
 	}
 }
@@ -137,8 +156,6 @@ void AHand::OnDropPressed()
 {
 	if (InteractingActor)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%s: dropping held actor %s"), *GetName(), *InteractingActor->GetName());
-
 		InteractingActor->Drop(this);
 		InteractingActor = nullptr;
 	}
@@ -153,8 +170,6 @@ void AHand::OnGrabPressed()
 	}
 
 	bWantsGrab = true;
-
-	//GEngine->AddOnScreenDebugMessage(0, 2.0f, FColor::Yellow, FString::Printf(TEXT("%s: Grab input pressed"), *GetName()));
 
 	if (InteractingActor)
 	{
@@ -179,8 +194,6 @@ void AHand::OnGrabReleased()
 	}
 
 	bWantsGrab = false;
-
-	//GEngine->AddOnScreenDebugMessage(0, 2.0f, FColor::Yellow, FString::Printf(TEXT("%s: Grab input released"), *GetName()));
 
 	if (InteractingActor)
 	{
@@ -222,9 +235,10 @@ void AHand::UpdateNearbyActors()
 
 		NearbyActors.Add(Actor);
 
-		FInteractionHelperReturnParams Params;
+		TArray<FInteractionHelperReturnParams> Params;
+		Actor->GetInteractionConditions(this, Params);
 
-		if (!Actor->CanInteract(this, Params))
+		if (Params.Num() == 0)
 		{
 			continue;
 		}

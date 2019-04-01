@@ -95,7 +95,7 @@ public:
 	//////////////////////////////////////////////////////////////////////////
 	//	VR
 
-	virtual bool CanInteract(const AHand* InteractingHand, FInteractionHelperReturnParams& Params) const;
+	virtual void GetInteractionConditions(const AHand* InteractingHand, TArray<FInteractionHelperReturnParams>& Params) const;
 
 	virtual void OnBeginInteraction(AHand* Hand) override;
 	virtual void OnEndInteraction(AHand* Hand) override;
@@ -159,6 +159,8 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnDryFire();
+
+	FVector GetMuzzleDirection() const;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon (Slide)")
 	FName SlideStartSocket;

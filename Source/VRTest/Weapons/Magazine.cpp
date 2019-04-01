@@ -42,11 +42,11 @@ bool AMagazine::CanHolster() const
 	return CurrentAmmo > 0;
 }
 
-bool AMagazine::CanInteract(const AHand* InteractingHand, FInteractionHelperReturnParams& Params) const
+void AMagazine::GetInteractionConditions(const AHand* InteractingHand, TArray<FInteractionHelperReturnParams>& Params) const
 {
 	if (!bInteractable)
 	{
-		return false;
+		return;
 	}
 
 	if (AttachedFirearm)
@@ -54,29 +54,29 @@ bool AMagazine::CanInteract(const AHand* InteractingHand, FInteractionHelperRetu
 		if (!AttachedFirearm->GetAttachedHand())
 		{
 			// Don't allow magazine pickup if we aren't in a held weapon
-			return false;
+			return;
 		}
 		else if (AttachedFirearm->GetAttachedHand() == InteractingHand)
 		{
 			// Prevent grab by the held hand
-			return false;
+			return;
 		}
 
 		// Don't allow pickup if we are in an empty weapon with some ammo, prefer to use the slide instead.
 		if (AttachedFirearm->ChamberedRoundStatus == EChamberedRoundStatus::NoRound && CurrentAmmo > 0)
 		{
-			return false;
+			return;
 		}
 	}
 	else
 	{
 		if (CurrentAmmo == 0)
 		{
-			return false;
+			return;
 		}
 	}
 
-	return Super::CanInteract(InteractingHand, Params);
+	Super::GetInteractionConditions(InteractingHand, Params);
 }
 
 void AMagazine::OnBeginPickup(AHand* Hand)

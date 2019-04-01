@@ -282,19 +282,22 @@ void AFirearm::Tick(float DeltaTime)
 	}
 }
 
-bool AFirearm::CanInteract(const AHand* InteractingHand, FInteractionHelperReturnParams& Params) const
+void AFirearm::GetInteractionConditions(const AHand* InteractingHand, TArray<FInteractionHelperReturnParams>& Params) const
 {
 	if (AttachedCharacter)
 	{
-		return false;
+		return;
 	}
 
 	if (InteractingHand == AttachedHand)
 	{
-		Params.Location = GetActorLocation();
-		Params.Tag = TEXT("Trigger");
-		Params.bRenderHelper = false;
-		return true;
+		FInteractionHelperReturnParams InteractionParams;
+
+		InteractionParams.Location = GetActorLocation();
+		InteractionParams.Tag = TEXT("Trigger");
+		InteractionParams.bRenderHelper = false;
+
+		Params.Add(InteractionParams);
 	}
 	else
 	{
@@ -305,15 +308,22 @@ bool AFirearm::CanInteract(const AHand* InteractingHand, FInteractionHelperRetur
 		{
 			if (!GripBone.IsNone())
 			{
+				FInteractionHelperReturnParams InteractionParams;
+
 				const FVector GripBoneLocation = FirearmMesh->GetBoneLocation(GripBone);
 
 				const float DistanceToGripBone = (GripBoneLocation - HandLocation).Size();
 				if (DistanceToGripBone <= TestRadius)
 				{
-					Params.Tag = TEXT("Grip");
-					Params.Location = GripBoneLocation;
-					return true;
+					InteractionParams.Tag = TEXT("Grip");
+					InteractionParams.Location = GripBoneLocation;
 				}
+				else
+				{
+					InteractionParams.bCanUse = false;
+				}
+
+				Params.Add(InteractionParams);
 			}
 		}
 
@@ -322,23 +332,31 @@ bool AFirearm::CanInteract(const AHand* InteractingHand, FInteractionHelperRetur
 			const FVector SlideBoneLocation = FirearmMesh->GetSocketLocation(SlideEndSocket);
 			const float DistanceToSlideBone = (SlideBoneLocation - HandLocation).Size();
 
+			FInteractionHelperReturnParams InteractionParams;
+
 			if (DistanceToSlideBone <= TestRadius)
 			{
-				Params.Tag = TEXT("Slide");
-				Params.Location = SlideBoneLocation;
-				return true;
+				InteractionParams.Tag = TEXT("Slide");
+				InteractionParams.Location = SlideBoneLocation;
 			}
+			else
+			{
+				InteractionParams.bCanUse = false;
+			}
+
+			Params.Add(InteractionParams);
 		}
 	}
 
 	if (!AttachedHand)
 	{
-		Params.Tag = TEXT("Weapon");
-		Params.Location = GetActorLocation();
-		return true;
-	}
+		FInteractionHelperReturnParams InteractionParams;
 
-	return false;
+		InteractionParams.Tag = TEXT("Weapon");
+		InteractionParams.Location = GetActorLocation();
+
+		Params.Add(InteractionParams);
+	}
 }
 
 void AFirearm::SetAmmoPreviewStatus(EAmmoPreviewStatus NewPreviewStatus)
@@ -361,21 +379,27 @@ void AFirearm::OnBeginInteraction(AHand* Hand)
 {
 	Super::OnBeginInteraction(Hand);
 
-	FInteractionHelperReturnParams Params;
+	TArray<FInteractionHelperReturnParams> Params;
+	GetInteractionConditions(Hand, Params);
 
-	if (CanInteract(Hand, Params))
+	for(auto Param : Params)
 	{
-		if (Params.Tag == TEXT("Grip"))
+		if (!Param.bCanUse)
+		{
+			continue;
+		}
+
+		if (Param.Tag == TEXT("Grip"))
 		{
 			bUsingGrip = true;
 		}
 
-		if (Params.Tag == TEXT("Slide"))
+		if (Param.Tag == TEXT("Slide"))
 		{
 			bUsingSlide = true;
 		}
 
-		if (Params.Tag == TEXT("Trigger"))
+		if (Param.Tag == TEXT("Trigger"))
 		{
 			if (ChamberedRoundStatus == EChamberedRoundStatus::NoRound || ChamberedRoundStatus == EChamberedRoundStatus::Spent)
 			{
@@ -679,6 +703,13 @@ void AFirearm::EjectRound()
 	}
 
 	ChamberedRoundStatus = EChamberedRoundStatus::NoRound;
+}
+
+FVector AFirearm::GetMuzzleDirection() const
+{
+	FTransform MuzzleTransform = FirearmMesh->GetSocketTransform(MuzzleBone);
+	
+	return MuzzleTransform.GetRotation().Vector();
 }
 
 bool AFirearm::IsCompatibleMagazine(AMagazine* Magazine)
