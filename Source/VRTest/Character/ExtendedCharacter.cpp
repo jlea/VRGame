@@ -34,6 +34,21 @@ AExtendedCharacter::AExtendedCharacter()
 
 	HeadBone = TEXT("Head");
 
+	SeverableBones.Add(TEXT("spine_01"));
+	SeverableBones.Add(TEXT("upperarm_l"));
+	SeverableBones.Add(TEXT("upperarm_r"));
+	SeverableBones.Add(TEXT("lowerarm_l"));
+	SeverableBones.Add(TEXT("lowerarm_r"));	
+	SeverableBones.Add(TEXT("calf_l"));
+	SeverableBones.Add(TEXT("calf_r"));
+	SeverableBones.Add(TEXT("thigh_l"));
+	SeverableBones.Add(TEXT("thigh_r"));
+	SeverableBones.Add(TEXT("hand_l"));
+	SeverableBones.Add(TEXT("hand_r"));
+
+	ArterialBones.Add(TEXT("head"));
+	ArterialBones.Add(TEXT("neck_01"));
+	
 	BloodDecalMaxSprayDistance = 200.0f;
 }
 
@@ -258,13 +273,19 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 				// See which direction our shot is attack from
 				const FVector AttackDir = (HitResult.TraceEnd - HitResult.TraceStart).GetSafeNormal();
 				const FVector ImpactDir = -AttackDir;
-				const FRotator RotationDelta = (ImpactDir.Rotation() - GetMesh()->GetComponentRotation()).GetNormalized();
+				const FRotator LookRot = GetMesh()->GetComponentRotation();
+
+				const FRotator RotationDelta = (ImpactDir.Rotation() - LookRot).GetNormalized();
 
 				if (EquippedFirearm)
 				{
 					const float YawThreshold = 30.0f;
 					const float BackAttackThreshold = 90.0f;
 
+					//DrawDebugLine(GetWorld(), HitResult.TraceStart, HitResult.TraceStart + LookRot.Vector() * 500.0f, FColor::Yellow, false, 3.0f, SDPG_World, 1.0f);
+					//DrawDebugLine(GetWorld(), HitResult.TraceStart, HitResult.TraceStart + ImpactDir * 500.0f, FColor::Green, false, 3.0f, SDPG_World, 1.0f);
+					//DrawDebugLine(GetWorld(), HitResult.TraceEnd, HitResult.TraceStart, FColor::Green, false, 3.0f, SDPG_World, 1.0f);
+				
 					const bool bCenterAttack = FMath::Abs(RotationDelta.Yaw) < YawThreshold;
 					const bool bBackAttack = FMath::Abs(RotationDelta.Yaw) >= BackAttackThreshold;
 					const bool bLeftAttack = RotationDelta.Yaw >= YawThreshold && RotationDelta.Yaw < BackAttackThreshold;
@@ -421,7 +442,15 @@ void AExtendedCharacter::Kill(AController* Killer, AActor *DamageCauser, struct 
 
 			if (DamageType && DamageType->bSeverLimbs)
 			{
-				SeverLimb(HitResult);
+				if (SeverableBones.Contains(HitResult.BoneName))
+				{
+					SeverLimb(HitResult);
+				}
+			}
+
+			if (ArterialBones.Contains(HitResult.BoneName))
+			{
+				Bleed(HitResult.BoneName);
 			}
 		}
 	}

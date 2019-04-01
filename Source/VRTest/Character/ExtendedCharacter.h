@@ -126,6 +126,13 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Damage FX")
 	float HeadshotForceMultiplier;
 
+	/* */
+	UPROPERTY(BlueprintReadOnly, EditInstanceOnly, Category = "Damage FX")
+	TArray<FName> SeverableBones;
+
+	UPROPERTY(BlueprintReadOnly, EditInstanceOnly, Category = "Damage FX")
+	TArray<FName> ArterialBones;
+
 	UPROPERTY(BlueprintReadOnly, Category = Damage)
 	TArray<FName> SeveredLimbs;
 
