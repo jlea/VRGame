@@ -11,6 +11,7 @@
 #include "Engine/DecalActor.h"
 #include "Weapons/Firearm.h"
 #include "DrawDebugHelpers.h"
+#include "Components/PawnNoiseEmitterComponent.h"
 #include "Perception/PawnSensingComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -23,6 +24,8 @@ AExtendedCharacter::AExtendedCharacter()
 	SensingComponent = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
 	SensingComponent->bEnableSensingUpdates = false;
 	SensingComponent->bOnlySensePlayers = false;
+
+	NoiseEmittingComponent = CreateDefaultSubobject<UPawnNoiseEmitterComponent>(TEXT("NoiseEmitting"));
 
 	bPlayingDamageAnimation = false;
 	bHasRagdolled = false;
@@ -425,33 +428,46 @@ void AExtendedCharacter::Kill(AController* Killer, AActor *DamageCauser, struct 
 	FHitResult HitResult;
 	bool bWasHeadshot = false;
 
+	if (DamageEvent.IsOfType(FRadialDamageEvent::ClassID))
+	{
+		const FRadialDamageEvent* RadialDamageEvent = (const FRadialDamageEvent*)&DamageEvent;
+		if (RadialDamageEvent)
+		{
+			HitResult = RadialDamageEvent->ComponentHits[0];
+			HitResult.BoneName = SeverableBones[FMath::RandRange(0, SeverableBones.Num() - 1)];
+		}
+	}
+
 	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
 	{
 		const FPointDamageEvent* PointDamageEvent = (const FPointDamageEvent*)&DamageEvent;
 		if (PointDamageEvent)
 		{
 			HitResult = PointDamageEvent->HitInfo;
+		}
+	}
 
-			if (!HeadBone.IsNone())
+	if (HitResult.BoneName.IsValid())
+	{
+		if (!HeadBone.IsNone())
+		{
+			if (HitResult.BoneName == HeadBone)
 			{
-				if (HitResult.BoneName == HeadBone)
-				{
-					bWasHeadshot = true;
-				}
+				bWasHeadshot = true;
 			}
+		}
 
-			if (DamageType && DamageType->bSeverLimbs)
+		if (DamageType && DamageType->bSeverLimbs)
+		{
+			if (SeverableBones.Contains(HitResult.BoneName))
 			{
-				if (SeverableBones.Contains(HitResult.BoneName))
-				{
-					SeverLimb(HitResult);
-				}
+				SeverLimb(HitResult);
 			}
+		}
 
-			if (ArterialBones.Contains(HitResult.BoneName))
-			{
-				Bleed(HitResult.BoneName);
-			}
+		if (ArterialBones.Contains(HitResult.BoneName))
+		{
+			Bleed(HitResult.BoneName, false);
 		}
 	}
 
@@ -525,19 +541,27 @@ void AExtendedCharacter::PlayDialogueSound(USoundCue* Sound)
 	MakeNoise(1.0f, this, GetActorLocation(), 2500.0f);
 }
 
-void AExtendedCharacter::Bleed(FName Bone)
+void AExtendedCharacter::Bleed(FName Bone, bool bLimbTear)
 {
 	if (!GetMesh() || GetMesh()->GetBoneIndex(Bone) == INDEX_NONE)
 	{
 		return;
 	}
 
-	if (!BleedEffect)
+	if (bLimbTear)
 	{
-		return;
+		if (LimbTearEffect)
+		{
+			UGameplayStatics::SpawnEmitterAttached(LimbTearEffect, GetMesh(), Bone);
+		}
 	}
-
-	UGameplayStatics::SpawnEmitterAttached(BleedEffect, GetMesh(), Bone);
+	else
+	{
+		if (BleedEffect)
+		{
+			UGameplayStatics::SpawnEmitterAttached(BleedEffect, GetMesh(), Bone);
+		}
+	}
 }
 
 void AExtendedCharacter::SeverLimb(FHitResult Hit)
@@ -559,7 +583,7 @@ void AExtendedCharacter::SeverLimb(FHitResult Hit)
 	if (ParentBoneName != NAME_None)
 	{
 		//Spawn some blood at the parent bone
-		Bleed(ParentBoneName);
+		Bleed(ParentBoneName, true);
 	}
 
 	static FName CollisionProfileName(TEXT("Ragdoll"));
@@ -568,7 +592,7 @@ void AExtendedCharacter::SeverLimb(FHitResult Hit)
 	SeveredLimbs.AddUnique(Hit.BoneName);
 
 	//Add some blood to our limb
-	Bleed(Hit.BoneName);
+	Bleed(Hit.BoneName, true);
 
 	//
 	OnSeverLimb(Hit);

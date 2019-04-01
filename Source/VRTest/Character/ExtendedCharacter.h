@@ -13,6 +13,7 @@ class AFirearm;
 class USoundCue;
 class AWeapon;
 class ADecalActor;
+class UPawnNoiseEmitterComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FCharacterKilledDelegate, AExtendedCharacter*, Character, AController*, Killer, const FHitResult&, HitEvent);
 
@@ -103,7 +104,7 @@ public:
 	virtual void PlayDialogueSound(USoundCue* Sound);
 
 	UFUNCTION(BlueprintCallable, Category = Damage)
-	virtual void Bleed(FName Bone);
+	virtual void Bleed(FName Bone, bool bLimbTear);
 
 	UFUNCTION(BlueprintCallable, Category = Damage)
 	virtual void SeverLimb(FHitResult Hit);
@@ -111,9 +112,13 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = Damage)
 	void OnSeverLimb(FHitResult Hit);
 
-	/** Effect to spawn when we kill something */
+	/** Effect to spawn when die bleeding from small damage */
 	UPROPERTY(EditAnywhere, Category = "Damage FX")
 	UParticleSystem* BleedEffect;
+
+	/** Effect to spawn when we tear a limb from our body */
+	UPROPERTY(EditAnywhere, Category = "Damage FX")
+	UParticleSystem* LimbTearEffect;
 
 	/** Headshot effects */
 	UPROPERTY(EditAnywhere, Category = "Damage FX")
@@ -198,4 +203,7 @@ public:
 protected:
 	UPROPERTY(BlueprintReadOnly, VisibleDefaultsOnly, Category = "AI")
 	UPawnSensingComponent*	SensingComponent;
+
+	UPROPERTY(BlueprintReadOnly, VisibleDefaultsOnly, Category = "AI")
+	UPawnNoiseEmitterComponent* NoiseEmittingComponent;
 };
