@@ -23,6 +23,8 @@ ACharacterAIController::ACharacterAIController()
 	TargetLastSeenTimeKeyName = "TargetLastSeenTime";
 	TargetDistanceKeyName = "TargetDistance";
 
+	Suppression = 0.0f;
+
 	bShouldFire = false;
 }
 
@@ -173,15 +175,15 @@ void ACharacterAIController::Tick(float DeltaTime)
 		return;
 	}
 
-	FVector DirToTarget = (GetFocalPoint() - GetPawn()->GetActorLocation()).GetSafeNormal2D();
-	const float DotToTarget = FVector::DotProduct(GetControlRotation().Vector(), DirToTarget);
-
 	auto Me = Cast<AExtendedCharacter>(GetPawn());
 	if (Me)
 	{
 		auto Firearm = Me->EquippedFirearm;
 		if (Firearm)
 		{
+			FVector DirToTarget = (GetFocalPoint() - GetPawn()->GetActorLocation()).GetSafeNormal2D();
+			const float DotToTarget = FVector::DotProduct(Firearm->GetMuzzleDirection(), DirToTarget);
+
 			if (Firearm->AmmoLoadType == EFirearmAmmoLoadType::SemiAutomatic)
 			{
 				const bool bCanFire = DotToTarget > 0.9f && !Me->bPlayingDamageAnimation;
@@ -215,6 +217,11 @@ void ACharacterAIController::Tick(float DeltaTime)
 			}
 		}
 	}
+
+	// Decay suppression
+	float SuppressionDecrement = 10.0f;
+	Suppression -= (SuppressionDecrement * DeltaTime);
+	Suppression = FMath::Clamp(Suppression, 0.0f, 100.0f);
 }
 
 void ACharacterAIController::UpdateControlRotation(float DeltaTime, bool bUpdatePawn /* = true */)
@@ -441,6 +448,7 @@ void ACharacterAIController::SetNewEnemy(APawn* NewEnemy)
 
 	if (NewEnemy)
 	{
+		NewMemory.bIsAlive = true;
 		NewMemory.LastSeenPosition = NewEnemy->GetActorLocation();
 		NewMemory.LastSeenVelocity = NewEnemy->GetVelocity();
 		NewMemory.LastSeenTimestamp = GetWorld()->GetTimeSeconds();

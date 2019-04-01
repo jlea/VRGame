@@ -34,7 +34,7 @@ struct FAITargetMemory
 	{
 		TargetPawn = nullptr;
 		bHasLOS = false;
-		bIsAlive = true;
+		bIsAlive = false;
 	}
 };
 
@@ -132,6 +132,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Behavior Tree")
 	FName TargetLastSeenTimeKeyName;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Suppression")
+	float Suppression;
+	
 private:
 	bool bShouldFire;
 };
