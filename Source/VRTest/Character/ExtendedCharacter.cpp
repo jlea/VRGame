@@ -11,6 +11,7 @@
 #include "Engine/DecalActor.h"
 #include "Weapons/Firearm.h"
 #include "DrawDebugHelpers.h"
+#include "Components/DecalComponent.h"
 #include "Components/PawnNoiseEmitterComponent.h"
 #include "Perception/PawnSensingComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -243,19 +244,27 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.Owner = this;
 
-			FRotator RandomDecalRotation = BloodTrace.ImpactNormal.Rotation().GetInverse();
-			RandomDecalRotation.Add(-90.0f, 0.0f, 0.0f);
-			//RandomDecalRotation.Yaw += 90.0f;
+			FRotator RandomDecalRotation = BloodTrace.ImpactNormal.Rotation();
+			RandomDecalRotation.Roll = FMath::FRandRange(-180.0f, 180.0f);
+			RandomDecalRotation.Yaw += 180.0f;
 
 			const FVector SpawnLocation = BloodTrace.ImpactPoint;
 
+			ADecalActor* DecalActor = nullptr;
+
 			if(bHeadshot)
 			{
-				GetWorld()->SpawnActor<ADecalActor>(HeadshotDecal, SpawnLocation, RandomDecalRotation, SpawnParams);
+				DecalActor = GetWorld()->SpawnActor<ADecalActor>(HeadshotDecal, SpawnLocation, RandomDecalRotation, SpawnParams);
 			}
 			else
 			{
-				GetWorld()->SpawnActor<ADecalActor>(BloodDecal, SpawnLocation, RandomDecalRotation, SpawnParams);
+				DecalActor = GetWorld()->SpawnActor<ADecalActor>(BloodDecal, SpawnLocation, RandomDecalRotation, SpawnParams);
+			}
+
+			if (DecalActor)
+			{
+				auto DecalComponent = DecalActor->GetDecal();
+				DecalComponent->SetWorldLocationAndRotation(SpawnLocation, RandomDecalRotation);
 			}
 		}
 	}
@@ -332,6 +341,8 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 						int32 RandomAnimation = FMath::RandRange(0, ValidDamageAnimations.Num() - 1);
 						if (ValidDamageAnimations.IsValidIndex(RandomAnimation))
 						{
+							DrawDebugString(GetWorld(), FVector(0, 0, 100.0f), *ValidDamageAnimations[RandomAnimation].Animation->GetName(), this, FColor::White, 2.0f);
+
 							float AnimDuration = PlayAnimMontage(ValidDamageAnimations[RandomAnimation].Animation);
 							bPlayingDamageAnimation = true;
 

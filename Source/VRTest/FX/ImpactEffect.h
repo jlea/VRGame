@@ -53,8 +53,8 @@ struct FDecalData
 
 	/** defaults */
 	FDecalData()
-		: DecalSize(200.f)
-		, LifeSpan(10.f)
+		: DecalSize(4.0f)
+		, LifeSpan(120.0f)
 	{
 	}
 };

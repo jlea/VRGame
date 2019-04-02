@@ -4,6 +4,7 @@
 #include "Sound/SoundCue.h"
 #include "Character/ExtendedCharacter.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
+#include "Components/DecalComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 AImpactEffect::AImpactEffect(const FObjectInitializer& ObjectInitializer)
@@ -45,23 +46,21 @@ void AImpactEffect::BeginPlay()
 		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
 	}
 
-	//Spawn the decal
-	if (DefaultDecal.DecalMaterial)
+	if(DefaultDecal.DecalMaterial)
 	{
-		FRotator RandomDecalRotation = SurfaceHit.ImpactNormal.Rotation().GetInverse();
+		FRotator RandomDecalRotation = SurfaceHit.ImpactNormal.Rotation();
 		RandomDecalRotation.Roll = FMath::FRandRange(-180.0f, 180.0f);
 
-		if (DefaultDecal.LifeSpan != 0.0f)
-		{
-			const FMatrix DecalInternalTransform = FRotationMatrix(FRotator(0.f, 90.0f, -90.0f));
-			FVector AdjustedDecalSize = DecalInternalTransform.TransformVector(FVector(DefaultDecal.DecalSize, DefaultDecal.DecalSize, 1.0f));
+		const FMatrix DecalInternalTransform = FRotationMatrix(FRotator(0.f, 90.0f, -90.0f));
+		const FVector DecalSizeLocal = FVector(DefaultDecal.DecalSize, DefaultDecal.DecalSize, 1.0f);
+		FVector DecalSizeCorrected = DecalInternalTransform.TransformVector(DecalSizeLocal);
 
-			UGameplayStatics::SpawnDecalAttached(DefaultDecal.DecalMaterial, AdjustedDecalSize,
-				SurfaceHit.Component.Get(), SurfaceHit.BoneName,
-				SurfaceHit.ImpactPoint, RandomDecalRotation, EAttachLocation::KeepWorldPosition,
-				DefaultDecal.LifeSpan);
-		}
+		auto DecalComponent = UGameplayStatics::SpawnDecalAttached(DefaultDecal.DecalMaterial, DecalSizeCorrected,
+			SurfaceHit.Component.Get(), SurfaceHit.BoneName,
+			SurfaceHit.ImpactPoint, RandomDecalRotation, EAttachLocation::KeepWorldPosition,
+			DefaultDecal.LifeSpan);
 
+		DecalComponent->SetFadeScreenSize(0.0025f);
 	}
 
 	//Delete this actor after the decal wears off
