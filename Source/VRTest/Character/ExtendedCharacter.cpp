@@ -264,7 +264,9 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 			if (DecalActor)
 			{
 				auto DecalComponent = DecalActor->GetDecal();
-				DecalComponent->SetWorldLocationAndRotation(SpawnLocation, RandomDecalRotation);
+
+				DecalComponent->SetWorldLocationAndRotation(SpawnLocation, RandomDecalRotation); 
+				DecalComponent->SetFadeScreenSize(0.001f);
 			}
 		}
 	}

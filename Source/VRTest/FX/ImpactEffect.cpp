@@ -60,7 +60,7 @@ void AImpactEffect::BeginPlay()
 			SurfaceHit.ImpactPoint, RandomDecalRotation, EAttachLocation::KeepWorldPosition,
 			DefaultDecal.LifeSpan);
 
-		DecalComponent->SetFadeScreenSize(0.0025f);
+		DecalComponent->SetFadeScreenSize(0.001f);
 	}
 
 	//Delete this actor after the decal wears off
