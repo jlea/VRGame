@@ -56,23 +56,23 @@ void AVRGameState::TriggerBulletTime(float Duration)
 
 void AVRGameState::OnCharacterKilled(AExtendedCharacter* Character, AController* Killer, const FHitResult& HitEvent)
 {
-	if (Killer)
+	NumDeadCharacters++;
+	
+	if (Killer && Killer->IsPlayerController())
 	{
 		const float DistanceToCharacter = FVector::Dist(Killer->GetPawn()->GetActorLocation(), Character->GetActorLocation());
 		if (DistanceToCharacter < 300.0f)
 		{
 			TriggerBulletTime(BulletTimeDuration);
 		}
-	}
- 	
-	NumDeadCharacters++;
 
-	// Killed the last character
-	if (NumDeadCharacters == SpawnedCharacters.Num())
-	{
-		if (FMath::RandRange(0.0f, 1.0f) <= 0.35f)
+		// Killed the last character
+		if (NumDeadCharacters == SpawnedCharacters.Num())
 		{
-			TriggerBulletTime(BulletTimeDuration);
+			if (FMath::RandRange(0.0f, 1.0f) <= 0.35f)
+			{
+				TriggerBulletTime(BulletTimeDuration);
+			}
 		}
 	}
 
@@ -87,6 +87,13 @@ void AVRGameState::OnCharacterDamaged(AExtendedCharacter* Character, AController
 	if (Damager && Damager->IsLocalPlayerController())
 	{
 		NumPlayerShotsHit++;
+
+		// Shot the last character in close range
+		const float DistanceToCharacter = FVector::Dist(Damager->GetPawn()->GetActorLocation(), Character->GetActorLocation());
+		if (DistanceToCharacter < 1000.0f && NumDeadCharacters == (SpawnedCharacters.Num() - 1))
+		{
+			TriggerBulletTime(BulletTimeDuration);
+		}
 	}
 }
 
