@@ -227,7 +227,7 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 	}
 
 	// Trace behind to find where our blood might spawn
-	if (BloodDecal)
+	if (BloodDecal && DamageCauser)
 	{
 		FHitResult BloodTrace;
 		FCollisionObjectQueryParams ObjectQueryParams;
@@ -590,11 +590,11 @@ void AExtendedCharacter::SeverLimb(FHitResult Hit)
 		return;
 	}
 
-	FName ParentBoneName = GetMesh()->GetParentBone(Hit.BoneName);
-	if (ParentBoneName != NAME_None)
+	// Spurt flow at the location we just tore off from
+	if (LimbFlowEffect)
 	{
-		//Spawn some blood at the parent bone
-		Bleed(ParentBoneName, true);
+		FTransform SocketTransform = GetMesh()->GetSocketTransform(Hit.BoneName);
+		UGameplayStatics::SpawnEmitterAttached(LimbTearEffect, GetMesh(), NAME_None, SocketTransform.GetLocation(), SocketTransform.GetRotation().Rotator(), EAttachLocation::KeepWorldPosition);
 	}
 
 	static FName CollisionProfileName(TEXT("Ragdoll"));
@@ -602,7 +602,7 @@ void AExtendedCharacter::SeverLimb(FHitResult Hit)
 	GetMesh()->BreakConstraint(Hit.ImpactNormal, Hit.ImpactPoint, Hit.BoneName);
 	SeveredLimbs.AddUnique(Hit.BoneName);
 
-	//Add some blood to our limb
+	//Bleed from our limb
 	Bleed(Hit.BoneName, true);
 
 	//

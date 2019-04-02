@@ -118,6 +118,9 @@ public:
 
 	/** Effect to spawn when we tear a limb from our body */
 	UPROPERTY(EditAnywhere, Category = "Damage FX")
+	UParticleSystem* LimbFlowEffect;
+
+	UPROPERTY(EditAnywhere, Category = "Damage FX")
 	UParticleSystem* LimbTearEffect;
 
 	/** Headshot effects */
