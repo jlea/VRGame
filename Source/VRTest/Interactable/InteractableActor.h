@@ -49,6 +49,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "VR")
 	virtual void GetInteractionConditions(const AHand* InteractingHand, TArray<FInteractionHelperReturnParams>& ReturnParams) const;
 
+	/* Override this to return */
+	virtual FText GetDefaultInteractionText() const { return DefaultInteractionText; } 
+
 protected:
 	virtual void OnBeginPickup(AHand* Hand);
 	virtual void OnBeginInteraction(AHand* Hand);
@@ -80,6 +83,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Gameplay")
 	EInteractPriority	InteractPriority;
+
+	UPROPERTY(EditAnywhere, Category = "Gameplay")
+	FText	DefaultInteractionText;
 
 	//////////////////////////////////////////////////////////////////////////
 	//	Delegates

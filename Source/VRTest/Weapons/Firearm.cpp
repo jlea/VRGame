@@ -289,36 +289,53 @@ void AFirearm::GetInteractionConditions(const AHand* InteractingHand, TArray<FIn
 		return;
 	}
 
-	if (InteractingHand == AttachedHand)
+	if(AttachedHand)
 	{
-		FInteractionHelperReturnParams InteractionParams;
-
-		InteractionParams.Location = GetActorLocation();
-		InteractionParams.Tag = TEXT("Trigger");
-		InteractionParams.bRenderHelper = false;
-
-		Params.Add(InteractionParams);
-	}
-	else
-	{
-		const FVector HandLocation = InteractingHand->GetSphereComponent()->GetComponentLocation();
-		const float TestRadius = InteractingHand->GetSphereComponent()->GetScaledSphereRadius() / 2;
-
-		if (bUseTwoHandedGrip)
+		if (InteractingHand == AttachedHand)
 		{
-			if (!GripBone.IsNone())
+			FInteractionHelperReturnParams InteractionParams;
+
+			InteractionParams.Location = GetActorLocation();
+			InteractionParams.Tag = TEXT("Trigger");
+			InteractionParams.bRenderHelper = false;
+
+			Params.Add(InteractionParams);
+		}
+		else
+		{
+			const FVector HandLocation = InteractingHand->GetSphereComponent()->GetComponentLocation();
+			const float TestRadius = InteractingHand->GetSphereComponent()->GetScaledSphereRadius() / 2;
+
+			if (bUseTwoHandedGrip)
 			{
-				FInteractionHelperReturnParams InteractionParams;
-
-				const FVector GripBoneLocation = FirearmMesh->GetBoneLocation(GripBone);
-
-				const float DistanceToGripBone = (GripBoneLocation - HandLocation).Size();
-				if (DistanceToGripBone <= TestRadius)
+				if (!GripBone.IsNone())
 				{
+					const FVector GripBoneLocation = FirearmMesh->GetBoneLocation(GripBone);
+
+					FInteractionHelperReturnParams InteractionParams;
 					InteractionParams.Tag = TEXT("Grip");
 					InteractionParams.Location = GripBoneLocation;
+
+					const float DistanceToGripBone = (GripBoneLocation - HandLocation).Size();
+					if (DistanceToGripBone > TestRadius)
+					{
+						InteractionParams.bCanUse = false;
+					}
+
+					Params.Add(InteractionParams);
 				}
-				else
+			}
+
+			if (!SlideEndSocket.IsNone())
+			{
+				const FVector SlideBoneLocation = FirearmMesh->GetSocketLocation(SlideEndSocket);
+				const float DistanceToSlideBone = (SlideBoneLocation - HandLocation).Size();
+
+				FInteractionHelperReturnParams InteractionParams;
+				InteractionParams.Tag = TEXT("Slide");
+				InteractionParams.Location = SlideBoneLocation;
+
+				if (DistanceToSlideBone > TestRadius)
 				{
 					InteractionParams.bCanUse = false;
 				}
@@ -326,36 +343,11 @@ void AFirearm::GetInteractionConditions(const AHand* InteractingHand, TArray<FIn
 				Params.Add(InteractionParams);
 			}
 		}
-
-		if (!SlideEndSocket.IsNone())
-		{
-			const FVector SlideBoneLocation = FirearmMesh->GetSocketLocation(SlideEndSocket);
-			const float DistanceToSlideBone = (SlideBoneLocation - HandLocation).Size();
-
-			FInteractionHelperReturnParams InteractionParams;
-
-			if (DistanceToSlideBone <= TestRadius)
-			{
-				InteractionParams.Tag = TEXT("Slide");
-				InteractionParams.Location = SlideBoneLocation;
-			}
-			else
-			{
-				InteractionParams.bCanUse = false;
-			}
-
-			Params.Add(InteractionParams);
-		}
 	}
-
+	
 	if (!AttachedHand)
 	{
-		FInteractionHelperReturnParams InteractionParams;
-
-		InteractionParams.Tag = TEXT("Weapon");
-		InteractionParams.Location = GetActorLocation();
-
-		Params.Add(InteractionParams);
+		Super::GetInteractionConditions(InteractingHand, Params);
 	}
 }
 

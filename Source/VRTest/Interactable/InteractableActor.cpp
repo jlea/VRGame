@@ -15,6 +15,7 @@ AInteractableActor::AInteractableActor()
 
 	AttachedHand = nullptr;
 
+	DefaultInteractionText = FText::FromString("Pick Up");
 	InteractPriority = EInteractPriority::Low;
 
 	bDropOnRelease = true;
@@ -120,6 +121,7 @@ void AInteractableActor::GetInteractionConditions(const AHand* InteractingHand, 
 {
 	FInteractionHelperReturnParams InteractionParams;
 	InteractionParams.Location = GetActorLocation();
+	InteractionParams.Tag = GetDefaultInteractionText().ToString();
 
 	// Can't grab.. already holding
 	if (AttachedHand && AttachedHand == InteractingHand)

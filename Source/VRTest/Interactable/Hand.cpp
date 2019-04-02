@@ -10,7 +10,7 @@
 #include "Engine.h"
 #include "World/TeleportDestination.h"
 #include "WidgetInteractionComponent.h"
-#include "Interactable/InteractionHelperComponent.h"
+#include "Interactable/InteractionHelper.h"
 #include "Interactable/InteractableActor.h"
 
 // Sets default values
@@ -57,9 +57,7 @@ void AHand::BeginPlay()
 	const int NumHelpers = 5;
 	for (int i = 0; i < NumHelpers; i++)
 	{
-		UInteractionHelperComponent* InteractionHelper = NewObject<UInteractionHelperComponent>(this, InteractionHelperClass);
-		InteractionHelper->RegisterComponentWithWorld(GetWorld());
-		InteractionHelper->CreationMethod = EComponentCreationMethod::UserConstructionScript;
+		AInteractionHelper* InteractionHelper = GetWorld()->SpawnActor<AInteractionHelper>(InteractionHelperClass, GetTransform());
 		InteractionHelper->AttachToComponent(HandOrigin, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 		
 		InteractionHelpers.Add(InteractionHelper);
@@ -120,21 +118,45 @@ void AHand::Tick(float DeltaTime)
 		}
 	}
 
-	if (ClosestNearbyActor)
+	AInteractableActor* HelperActor = ClosestNearbyActor;
+	if (!HelperActor)
+	{
+		AHand* TestHand = nullptr;
+
+		// No nearby actor.. see what's in our other hand
+		if (HandType == EControllerHand::Left)
+		{
+			TestHand = GetPlayerPawn()->RightHand;
+		}
+		else
+		{
+			TestHand = GetPlayerPawn()->LeftHand;
+		}
+
+		if (TestHand)
+		{
+			if (TestHand->GetInteractingActor())
+			{
+				HelperActor = TestHand->GetInteractingActor();
+			}
+		}
+	}
+
+	if (HelperActor)
 	{
 		TArray<FInteractionHelperReturnParams> Params;
 
-		ClosestNearbyActor->GetInteractionConditions(this, Params);
+		HelperActor->GetInteractionConditions(this, Params);
 
 		//	Update the status of our interaction helpers
 
 		for (int i = 0; i < InteractionHelpers.Num(); i++)
 		{
-			UInteractionHelperComponent* InteractionHelper = InteractionHelpers[i];
+			AInteractionHelper* InteractionHelper = InteractionHelpers[i];
 
 			if (Params.IsValidIndex(i))
 			{
-				FInteractionHelperReturnParams Param = Params[i];
+				FInteractionHelperReturnParams& Param = Params[i];
 				if (Param.bRenderHelper)
 				{
 					InteractionHelper->SetHelperParams(Param);
@@ -148,6 +170,14 @@ void AHand::Tick(float DeltaTime)
 			{
 				InteractionHelper->SetNoHelper();
 			}
+		}
+	}
+	else
+	{
+		for (int i = 0; i < InteractionHelpers.Num(); i++)
+		{
+			AInteractionHelper* InteractionHelper = InteractionHelpers[i];
+			InteractionHelper->SetNoHelper();
 		}
 	}
 }
