@@ -531,6 +531,8 @@ void AFirearm::DetachFromCharacter()
 		LoadedMagazine->SetActorEnableCollision(true);
 	}
 
+	bTriggerDown = false;
+
 	AttachedCharacter->EquippedFirearm = nullptr;
 	AttachedCharacter = nullptr;
 }
