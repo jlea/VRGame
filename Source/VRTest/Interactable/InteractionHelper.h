@@ -3,18 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/SceneComponent.h"
 #include "HandEnums.h"
-#include "InteractionHelperComponent.generated.h"
+#include "InteractionHelper.generated.h"
 
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class VRTEST_API UInteractionHelperComponent : public USceneComponent
+UCLASS()
+class VRTEST_API AInteractionHelper : public AActor
 {
 	GENERATED_BODY()
 
-public:	
-	UInteractionHelperComponent();
+public:
+	AInteractionHelper();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
 	void OnInteractionEnabled();
@@ -24,4 +23,9 @@ public:
 
 	void SetHelperParams(FInteractionHelperReturnParams& Param);
 	void SetNoHelper();
+
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
+	FInteractionHelperReturnParams InteractionParams;
+
+	bool bInitialized;
 };
