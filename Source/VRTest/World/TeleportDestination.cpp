@@ -101,9 +101,9 @@ void ATeleportDestination::TeleportToDestination(APlayerPawn* Pawn, AHand* Hand)
 
 void ATeleportDestination::SetDestinationEnabled(bool bInEnabled)
 {
-	bEnabled = bInEnabled;
+	bTeleportEnabled = bInEnabled;
 
-	if (bEnabled)
+	if (bTeleportEnabled)
 	{
 		SetActorEnableCollision(true);
 		CollisionSphere->ShapeColor = FColor::Blue;
@@ -114,7 +114,7 @@ void ATeleportDestination::SetDestinationEnabled(bool bInEnabled)
 		CollisionSphere->ShapeColor = FColor::Red;
 	}
 
-	OnTeleportStateChanged(bEnabled);
+	OnTeleportStateChanged(bTeleportEnabled);
 }
 
 void ATeleportDestination::OnSpawnerFinished(ASpawner* Spawner)

@@ -55,8 +55,7 @@ public:
 	
 	virtual bool LineOfSightTo(const AActor* Other, FVector ViewPoint = FVector(ForceInit), bool bAlternateChecks = false) const override;
 
-	virtual void UnPossess() override;
-	virtual void Possess(APawn* InPawn) override;
+	virtual void OnPossess(APawn* InPawn) override;
 
 	virtual void Tick(float DeltaTime);
 	virtual void UpdateControlRotation(float DeltaTime, bool bUpdatePawn /* = true */) override;

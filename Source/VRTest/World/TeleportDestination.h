@@ -55,7 +55,7 @@ public:
 	void SetDestinationEnabled(bool bInEnabled);
 
 	UFUNCTION(BlueprintPure, Category = "Teleport")
-	bool IsEnabled() { return bEnabled; }
+	bool IsEnabled() { return bTeleportEnabled; }
 
 	UPROPERTY(BlueprintAssignable, BlueprintReadOnly, Category = "Teleport")
 	FTeleportDelegate OnTeleportedDelegate;
@@ -84,5 +84,5 @@ private:
 
 	int8 FinishedSpawners;
 
-	bool bEnabled;
+	bool bTeleportEnabled;
 };

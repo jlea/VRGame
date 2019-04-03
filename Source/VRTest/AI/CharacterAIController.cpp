@@ -140,16 +140,9 @@ bool ACharacterAIController::LineOfSightTo(const AActor* Other, FVector ViewPoin
 	return false;
 }
 
-void ACharacterAIController::UnPossess()
+void ACharacterAIController::OnPossess(APawn* InPawn)
 {
-	Super::UnPossess();
-
-	Destroy();
-}
-
-void ACharacterAIController::Possess(APawn* InPawn)
-{
-	Super::Possess(InPawn);
+	Super::OnPossess(InPawn);
 
 	auto Me = Cast<AExtendedCharacter>(InPawn);
 	if (Me)
@@ -183,7 +176,7 @@ void ACharacterAIController::Tick(float DeltaTime)
 		{
 			FVector DirToTarget = (GetFocalPoint() - GetPawn()->GetActorLocation()).GetSafeNormal2D();
 			const float DotToTarget = FVector::DotProduct(Firearm->GetMuzzleDirection(), DirToTarget);
-
+			
 			if (Firearm->AmmoLoadType == EFirearmAmmoLoadType::SemiAutomatic)
 			{
 				const bool bCanFire = DotToTarget > 0.9f && !Me->bPlayingDamageAnimation;
