@@ -10,14 +10,19 @@ AInteractionHelper::AInteractionHelper()
 
 void AInteractionHelper::SetHelperParams(FInteractionHelperReturnParams& Param)
 {
+	ensure(Param.AssociatedActor);
+
 	SetActorHiddenInGame(false);
-	SetActorLocation(Param.Location);
+	SetActorLocation(Param.WorldLocation);
 
 	auto OldParams = InteractionParams;
 
 	InteractionParams = Param;
 
-	if (InteractionParams.bCanUse != OldParams.bCanUse || !bInitialized)
+	bool bNewHelperParams = Param.Tag != OldParams.Tag || Param.AssociatedActor != OldParams.AssociatedActor;
+	bool bResetEvents = !bInitialized || InteractionParams.bCanUse != OldParams.bCanUse || bNewHelperParams;
+
+	if(bResetEvents)
 	{
 		bInitialized = true;
 

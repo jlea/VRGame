@@ -35,23 +35,31 @@ struct FInteractionHelperReturnParams
 {
 	GENERATED_USTRUCT_BODY()
 
-		UPROPERTY(BlueprintReadOnly)
-		FVector Location;
+	UPROPERTY(BlueprintReadOnly)
+	FVector WorldLocation;
+
+	/* Used to determine actions in response to the helper */
+	UPROPERTY(BlueprintReadOnly)
+	FString Tag;
+
+	/* what should be displayed to the user when this helper is visible */
+	UPROPERTY(BlueprintReadOnly)
+	FString Message;
 
 	UPROPERTY(BlueprintReadOnly)
-		FString Tag;
+	bool	bRenderHelper;
 
 	UPROPERTY(BlueprintReadOnly)
-		bool	bRenderHelper;
+	bool	bCanUse;
 
-	UPROPERTY(BlueprintReadOnly)
-		bool	bCanUse;
-
+	UPROPERTY()
+	AActor* AssociatedActor;
 
 	/** defaults */
 	FInteractionHelperReturnParams()
 	{
 		bRenderHelper = true;
 		bCanUse = true;
+		AssociatedActor = nullptr;
 	}
 };

@@ -139,15 +139,16 @@ void AFirearm::Tick(float DeltaTime)
 					continue;
 				}
 
+				// Weapons with an internal magazine should check for a held cartridge
 				auto HeldCartridge = Cast<ACartridge>(HeldActor);
 				if (HeldCartridge)
 				{
-					auto LoadedMagazine = GetLoadedMagazine();;
-					if (LoadedMagazine && HeldCartridge->CanLoadIntoMagazine(LoadedMagazine))
+					auto HeldWeaponLoadedMagazine = GetLoadedMagazine();
+					if (HeldWeaponLoadedMagazine && HeldCartridge->CanLoadIntoMagazine(HeldWeaponLoadedMagazine))
 					{
 						NewAmmoPreviewStatus = EAmmoPreviewStatus::OutOfRange;
 
-						if (LoadedMagazine->IsReadyToLoadCartridge(HeldCartridge))
+						if (HeldWeaponLoadedMagazine->IsReadyToLoadCartridge(HeldCartridge))
 						{
 							NewAmmoPreviewStatus = EAmmoPreviewStatus::WithinRange;
 						}
@@ -295,8 +296,9 @@ void AFirearm::GetInteractionConditions(const AHand* InteractingHand, TArray<FIn
 		{
 			FInteractionHelperReturnParams InteractionParams;
 
-			InteractionParams.Location = GetActorLocation();
+			InteractionParams.WorldLocation = GetActorLocation();
 			InteractionParams.Tag = TEXT("Trigger");
+			InteractionParams.Message = TEXT("Fire");
 			InteractionParams.bRenderHelper = false;
 
 			Params.Add(InteractionParams);
@@ -314,7 +316,8 @@ void AFirearm::GetInteractionConditions(const AHand* InteractingHand, TArray<FIn
 
 					FInteractionHelperReturnParams InteractionParams;
 					InteractionParams.Tag = TEXT("Grip");
-					InteractionParams.Location = GripBoneLocation;
+					InteractionParams.Message = TEXT("Grab grip");
+					InteractionParams.WorldLocation = GripBoneLocation;
 
 					const float DistanceToGripBone = (GripBoneLocation - HandLocation).Size();
 					if (DistanceToGripBone > TestRadius)
@@ -333,7 +336,8 @@ void AFirearm::GetInteractionConditions(const AHand* InteractingHand, TArray<FIn
 
 				FInteractionHelperReturnParams InteractionParams;
 				InteractionParams.Tag = TEXT("Slide");
-				InteractionParams.Location = SlideBoneLocation;
+				InteractionParams.Message = TEXT("Pull slide");
+				InteractionParams.WorldLocation = SlideBoneLocation;
 
 				if (DistanceToSlideBone > TestRadius)
 				{

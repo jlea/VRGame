@@ -79,19 +79,15 @@ void AMagazine::GetInteractionConditions(const AHand* InteractingHand, TArray<FI
 	Super::GetInteractionConditions(InteractingHand, Params);
 }
 
-FText AMagazine::GetDefaultInteractionText() const
+FText AMagazine::GetDefaultInteractionMessage() const
 {
 	if (AttachedFirearm)
 	{
 		return FText::FromString("Eject Magazine");
 	}
-	else if (LoadableFirearm)
-	{
-		return FText::FromString("Load Magazine");
-	}
 	else
 	{
-		return Super::GetDefaultInteractionText();
+		return Super::GetDefaultInteractionMessage();
 	}
 }
 

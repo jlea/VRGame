@@ -22,7 +22,7 @@ public:
 
 	virtual bool CanHolster() const override; 
 	virtual void GetInteractionConditions(const AHand* InteractingHand, TArray<FInteractionHelperReturnParams>& Params) const override;
-	virtual FText GetDefaultInteractionText() const;
+	virtual FText GetDefaultInteractionMessage() const;
 
 	virtual void OnBeginPickup(AHand* Hand) override;
 	virtual void OnDrop(AHand* Hand) override;

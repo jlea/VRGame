@@ -120,8 +120,9 @@ AHand* AInteractableActor::GetBestInteractingHand()
 void AInteractableActor::GetInteractionConditions(const AHand* InteractingHand, TArray<FInteractionHelperReturnParams>& ReturnParams) const
 {
 	FInteractionHelperReturnParams InteractionParams;
-	InteractionParams.Location = GetActorLocation();
-	InteractionParams.Tag = GetDefaultInteractionText().ToString();
+	InteractionParams.WorldLocation = GetActorLocation();
+	InteractionParams.Message = GetDefaultInteractionMessage().ToString();
+	InteractionParams.Tag = "Pick Up";
 
 	// Can't grab.. already holding
 	if (AttachedHand && AttachedHand == InteractingHand)

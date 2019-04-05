@@ -142,14 +142,15 @@ void AHand::Tick(float DeltaTime)
 		}
 	}
 
-	if (HelperActor)
+	// Only render helpers if we aren't already interacting with something
+	const bool bRenderHelpers = InteractingActor == nullptr;
+
+	if (HelperActor && bRenderHelpers)
 	{
 		TArray<FInteractionHelperReturnParams> Params;
-
 		HelperActor->GetInteractionConditions(this, Params);
 
 		//	Update the status of our interaction helpers
-
 		for (int i = 0; i < InteractionHelpers.Num(); i++)
 		{
 			AInteractionHelper* InteractionHelper = InteractionHelpers[i];
@@ -157,6 +158,8 @@ void AHand::Tick(float DeltaTime)
 			if (Params.IsValidIndex(i))
 			{
 				FInteractionHelperReturnParams& Param = Params[i];
+				Param.AssociatedActor = HelperActor;
+
 				if (Param.bRenderHelper)
 				{
 					InteractionHelper->SetHelperParams(Param);

@@ -49,8 +49,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "VR")
 	virtual void GetInteractionConditions(const AHand* InteractingHand, TArray<FInteractionHelperReturnParams>& ReturnParams) const;
 
-	/* Override this to return */
-	virtual FText GetDefaultInteractionText() const { return DefaultInteractionText; } 
+	/* Override this to change the default pick up text */
+	virtual FText GetDefaultInteractionMessage() const { return DefaultInteractionText; } 
 
 protected:
 	virtual void OnBeginPickup(AHand* Hand);
