@@ -343,8 +343,6 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 						int32 RandomAnimation = FMath::RandRange(0, ValidDamageAnimations.Num() - 1);
 						if (ValidDamageAnimations.IsValidIndex(RandomAnimation))
 						{
-							DrawDebugString(GetWorld(), FVector(0, 0, 100.0f), *ValidDamageAnimations[RandomAnimation].Animation->GetName(), this, FColor::White, 2.0f);
-
 							float AnimDuration = PlayAnimMontage(ValidDamageAnimations[RandomAnimation].Animation);
 							bPlayingDamageAnimation = true;
 
