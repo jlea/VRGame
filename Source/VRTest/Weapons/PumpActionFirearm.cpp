@@ -15,23 +15,3 @@ APumpActionFirearm::APumpActionFirearm()
 	SlideEndSocket = TEXT("PumpEnd");
 	SlideAttachSocket = TEXT("PumpAttach");
 }
-
-void APumpActionFirearm::OnBeginInteraction(AHand* Hand)
-{
-	Super::OnBeginInteraction(Hand);
-}
-
-void APumpActionFirearm::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-
-bool APumpActionFirearm::CanFire()
-{
-	return Super::CanFire();
-}
-
-void APumpActionFirearm::Fire()
-{
-	Super::Fire();
-}

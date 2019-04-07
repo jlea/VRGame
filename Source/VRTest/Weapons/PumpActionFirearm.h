@@ -15,11 +15,4 @@ class VRTEST_API APumpActionFirearm : public AFirearm
 	GENERATED_BODY()
 public:
 	APumpActionFirearm();
-
-	virtual void OnBeginInteraction(AHand* Hand) override;
-	virtual void Tick(float DeltaTime) override;
-
-	virtual bool CanFire() override; 
-
-	virtual void Fire();
 };
