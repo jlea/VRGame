@@ -62,6 +62,12 @@ protected:
 	UPROPERTY(EditInstanceOnly, Category = "Spawner")
 	ATargetPoint* TargetLocation;
 
+	UPROPERTY(EditInstanceOnly, Category = "Bullet Time")
+	bool bTriggerBulletTimeOnDamage;
+
+	UPROPERTY(EditInstanceOnly, Category = "Bullet Time")
+	bool bTriggerBulletTimeOnKilled;
+
 	UPROPERTY(BlueprintReadOnly)
 	TArray<AExtendedCharacter*>	SpawnedPawns;
 

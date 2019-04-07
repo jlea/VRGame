@@ -72,7 +72,13 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Character")
 	bool bDead;
-	
+
+	UPROPERTY(EditInstanceOnly, Category = "Bullet Time")
+	bool bTriggerBulletTimeOnDamage;
+
+	UPROPERTY(EditInstanceOnly, Category = "Bullet Time")
+	bool bTriggerBulletTimeOnKilled;
+
 	UPROPERTY(BlueprintAssignable)
 	FCharacterKilledDelegate OnDamagedDelegate;
 
@@ -183,7 +189,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = Animation)
 	float AimPitchDelta;
 
-	/* )*/
+	/* */
 	float CurrentControllerYaw;
 
 	/* */

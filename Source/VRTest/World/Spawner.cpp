@@ -19,6 +19,10 @@ ASpawner::ASpawner()
 	SpawnerMeshPreview = CreateDefaultSubobject<USkeletalMeshComponent>("HandMesh");
 	SpawnerMeshPreview->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	RootComponent = SpawnerMeshPreview;
+
+	bTriggerBulletTimeOnDamage = false;
+	bTriggerBulletTimeOnKilled = false;
+
 	TeamId = 1;
 }
 
@@ -84,6 +88,9 @@ void ASpawner::SpawnPawn()
 	if (SpawnedCharacter)
 	{
 		SpawnedCharacter->TeamId = TeamId;
+		SpawnedCharacter->bTriggerBulletTimeOnKilled = bTriggerBulletTimeOnKilled;
+		SpawnedCharacter->bTriggerBulletTimeOnDamage = bTriggerBulletTimeOnDamage;
+
 		SpawnedCharacter->OnKilledDelegate.AddDynamic(this, &ThisClass::PawnKilled);
 
 		UGameplayStatics::FinishSpawningActor(SpawnedCharacter, GetActorTransform());

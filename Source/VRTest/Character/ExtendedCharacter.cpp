@@ -31,6 +31,9 @@ AExtendedCharacter::AExtendedCharacter()
 	bPlayingDamageAnimation = false;
 	bHasRagdolled = false;
 
+	bTriggerBulletTimeOnKilled = false;
+	bTriggerBulletTimeOnDamage = false;
+
 	HeadshotForceMultiplier = 10000.0f;
 	HeadshotMultiplier = 3.0f;
 	MaxHealth = 100;
