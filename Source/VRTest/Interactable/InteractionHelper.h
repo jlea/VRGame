@@ -16,16 +16,11 @@ public:
 	AInteractionHelper();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
-	void OnInteractionEnabled();
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
-	void OnInteractionDisabled();
+	void OnInteractionStateChanged();
 
 	void SetHelperParams(FInteractionHelperReturnParams& Param);
-	void SetNoHelper();
+	void SetHidden();
 
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
 	FInteractionHelperReturnParams InteractionParams;
-
-	bool bInitialized;
 };

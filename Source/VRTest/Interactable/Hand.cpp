@@ -118,121 +118,9 @@ void AHand::Tick(float DeltaTime)
 		}
 	}
 
-	AInteractableActor* HelperActor = ClosestNearbyActor;
-	if (!HelperActor)
-	{
-		AHand* TestHand = nullptr;
-
-		// No nearby actor.. see what's in our other hand
-		if (HandType == EControllerHand::Left)
-		{
-			TestHand = GetPlayerPawn()->RightHand;
-		}
-		else
-		{
-			TestHand = GetPlayerPawn()->LeftHand;
-		}
-
-		if (TestHand)
-		{
-			if (TestHand->GetInteractingActor())
-			{
-				HelperActor = TestHand->GetInteractingActor();
-			}
-		}
-	}
-
-	// Only render helpers if we aren't already interacting with something
-	const bool bRenderHelpers = InteractingActor == nullptr;
-
-	if (HelperActor && bRenderHelpers)
-	{
-		TArray<FInteractionHelperReturnParams> Params;
-		HelperActor->GetInteractionConditions(this, Params);
-
-		//	Update the status of our interaction helpers
-		for (int i = 0; i < InteractionHelpers.Num(); i++)
-		{
-			AInteractionHelper* InteractionHelper = InteractionHelpers[i];
-
-			if (Params.IsValidIndex(i))
-			{
-				FInteractionHelperReturnParams& Param = Params[i];
-				Param.AssociatedActor = HelperActor;
-
-				if (Param.bRenderHelper)
-				{
-					InteractionHelper->SetHelperParams(Param);
-				}
-				else
-				{
-					InteractionHelper->SetNoHelper();
-				}
-			}
-			else
-			{
-				InteractionHelper->SetNoHelper();
-			}
-		}
-	}
-	else
-	{
-		for (int i = 0; i < InteractionHelpers.Num(); i++)
-		{
-			AInteractionHelper* InteractionHelper = InteractionHelpers[i];
-			InteractionHelper->SetNoHelper();
-		}
-	}
+	UpdateHelpers();
 }
 
-void AHand::OnDropPressed()
-{
-	if (InteractingActor)
-	{
-		InteractingActor->Drop(this);
-		InteractingActor = nullptr;
-	}
-}
-
-void AHand::OnGrabPressed()
-{
-	if (GetPlayerPawn()->bDead)
-	{
-		OnDeadGrabPressed();
-		return;
-	}
-
-	bWantsGrab = true;
-
-	if (InteractingActor)
-	{
-		Grab(InteractingActor);
-	}
-	else
-	{
-		AInteractableActor*	NearbyActor = GetClosestActorToHand();
-		if (NearbyActor)
-		{
-			Grab(NearbyActor);
-		}
-	}
-}
-
-void AHand::OnGrabReleased()
-{
-	if (GetPlayerPawn()->bDead)
-	{
-		OnDeadGrabReleased();
-		return;
-	}
-
-	bWantsGrab = false;
-
-	if (InteractingActor)
-	{
-		ReleaseActor();
-	}
-}
 
 void AHand::UpdateNearbyActors()
 {
@@ -242,7 +130,7 @@ void AHand::UpdateNearbyActors()
 		return;
 	}
 
-	AInteractableActor*	OldNearbyActor = ClosestNearbyActor;
+	AInteractableActor* OldNearbyActor = ClosestNearbyActor;
 
 	NearbyActors.Empty();
 	NearbyInteractableActors.Empty();
@@ -253,7 +141,7 @@ void AHand::UpdateNearbyActors()
 	EInteractPriority BestPriority = EInteractPriority::Low;
 	float ClosestActorValue = FLT_MAX;
 	AInteractableActor* ClosestActor = nullptr;
-	
+
 	for (auto Actor : VRGameState->GetInteractableActors())
 	{
 		if (!Actor)
@@ -317,10 +205,156 @@ void AHand::UpdateNearbyActors()
 
 	if (ClosestNearbyActor != OldNearbyActor)
 	{
+		// Reset our interaction helpers
+		for (int i = 0; i < InteractionHelpers.Num(); i++)
+		{
+			AInteractionHelper* InteractionHelper = InteractionHelpers[i];
+			InteractionHelper->SetHidden();
+		}
+
 		OnHoverActorChanged(ClosestNearbyActor);
 	}
 }
 
+void AHand::UpdateHelpers()
+{
+	AInteractableActor* HelperActor = ClosestNearbyActor;
+	if (!HelperActor)
+	{
+		AHand* TestHand = nullptr;
+
+		// No nearby actor.. see what's in our other hand
+		if (HandType == EControllerHand::Left)
+		{
+			TestHand = GetPlayerPawn()->RightHand;
+		}
+		else
+		{
+			TestHand = GetPlayerPawn()->LeftHand;
+		}
+
+		if (TestHand)
+		{
+			if (TestHand->GetInteractingActor())
+			{
+				HelperActor = TestHand->GetInteractingActor();
+			}
+		}
+	}
+
+	float BestDistance = FLT_MAX;
+	AInteractionHelper* BestHelper = nullptr;
+	TArray<FInteractionHelperReturnParams> HelperParams;
+
+	if (HelperActor)
+	{
+		HelperActor->GetInteractionConditions(this, HelperParams);
+
+		// Sort our helpers to find the closest
+		for (int i = 0; i < InteractionHelpers.Num(); i++)
+		{
+			if (!HelperParams.IsValidIndex(i))
+			{
+				continue;
+			}
+
+			FInteractionHelperReturnParams& Param = HelperParams[i];
+			AInteractionHelper* InteractionHelper = InteractionHelpers[i];
+
+			const bool bValidHelper = Param.HelperState == EInteractionHelperState::Valid || Param.HelperState == EInteractionHelperState::Active;
+			if (bValidHelper)
+			{
+				const float DistanceToHelper = FVector::Dist(Param.WorldLocation, GetHandSelectionOrigin());
+				if (DistanceToHelper < BestDistance)
+				{
+					BestDistance = DistanceToHelper;
+					BestHelper = InteractionHelper;
+				}
+			}
+		}
+	}
+
+	// Don't update the helper if we are already interacting
+	const bool bUpdateBestHelper = InteractingActor == nullptr;
+	if (bUpdateBestHelper)
+	{
+		ActiveInteractionHelper = BestHelper;
+	}
+
+	// Update the state of all helpers once we have the interaction helper
+	for (int i = 0; i < InteractionHelpers.Num(); i++)
+	{
+		AInteractionHelper* InteractionHelper = InteractionHelpers[i];
+		if (!HelperParams.IsValidIndex(i))
+		{
+			InteractionHelper->SetHidden();
+			continue;
+		}
+		FInteractionHelperReturnParams& Param = HelperParams[i];
+
+		if (ActiveInteractionHelper == InteractionHelper)
+		{
+			Param.HelperState = EInteractionHelperState::Active;
+		}
+
+		if (InteractingActor)
+		{
+			// Don't display helpers while we are interacting with something
+			Param.bShouldRender = false;
+		}
+
+		InteractionHelper->SetHelperParams(Param);
+	}
+}
+
+void AHand::OnDropPressed()
+{
+	if (InteractingActor)
+	{
+		InteractingActor->Drop(this);
+		InteractingActor = nullptr;
+	}
+}
+
+void AHand::OnGrabPressed()
+{
+	if (GetPlayerPawn()->bDead)
+	{
+		OnDeadGrabPressed();
+		return;
+	}
+
+	bWantsGrab = true;
+
+	if (InteractingActor)
+	{
+		Grab(InteractingActor);
+	}
+	else
+	{
+		AInteractableActor*	NearbyActor = GetClosestActorToHand();
+		if (NearbyActor)
+		{
+			Grab(NearbyActor);
+		}
+	}
+}
+
+void AHand::OnGrabReleased()
+{
+	if (GetPlayerPawn()->bDead)
+	{
+		OnDeadGrabReleased();
+		return;
+	}
+
+	bWantsGrab = false;
+
+	if (InteractingActor)
+	{
+		ReleaseActor();
+	}
+}
 FVector AHand::GetHandSelectionOrigin() const
 {
 	return SphereCollision->GetComponentLocation();

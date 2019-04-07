@@ -5,6 +5,7 @@
 #include "Weapons/Magazine.h"
 #include "Weapons/Cartridge.h"
 #include "Interactable/Hand.h" 
+#include "Interactable/InteractionHelper.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "DrawDebugHelpers.h"
@@ -299,7 +300,8 @@ void AFirearm::GetInteractionConditions(const AHand* InteractingHand, TArray<FIn
 			InteractionParams.WorldLocation = GetActorLocation();
 			InteractionParams.Tag = TEXT("Trigger");
 			InteractionParams.Message = TEXT("Fire");
-			InteractionParams.bRenderHelper = false;
+			InteractionParams.bShouldRender = false;
+			InteractionParams.HelperState = EInteractionHelperState::Valid;
 
 			Params.Add(InteractionParams);
 		}
@@ -316,13 +318,17 @@ void AFirearm::GetInteractionConditions(const AHand* InteractingHand, TArray<FIn
 
 					FInteractionHelperReturnParams InteractionParams;
 					InteractionParams.Tag = TEXT("Grip");
-					InteractionParams.Message = TEXT("Grab grip");
+					InteractionParams.Message = TEXT("Grip");
 					InteractionParams.WorldLocation = GripBoneLocation;
 
 					const float DistanceToGripBone = (GripBoneLocation - HandLocation).Size();
 					if (DistanceToGripBone > TestRadius)
 					{
-						InteractionParams.bCanUse = false;
+						InteractionParams.HelperState = EInteractionHelperState::Invalid;
+					}
+					else
+					{
+						InteractionParams.HelperState = EInteractionHelperState::Valid;
 					}
 
 					Params.Add(InteractionParams);
@@ -339,12 +345,41 @@ void AFirearm::GetInteractionConditions(const AHand* InteractingHand, TArray<FIn
 				InteractionParams.Message = TEXT("Pull slide");
 				InteractionParams.WorldLocation = SlideBoneLocation;
 
+				// Only display the slide interaction when we need it
+				InteractionParams.bShouldRender = false;
+
+				if (ChamberedRoundStatus != EChamberedRoundStatus::Fresh)
+				{
+					if (LoadedMagazine && LoadedMagazine->CurrentAmmo > 0)
+					{
+						InteractionParams.bShouldRender = true;
+					}
+				}
+
 				if (DistanceToSlideBone > TestRadius)
 				{
-					InteractionParams.bCanUse = false;
+					InteractionParams.HelperState = EInteractionHelperState::Invalid;
+				}
+				else
+				{
+					InteractionParams.HelperState = EInteractionHelperState::Valid;
 				}
 
 				Params.Add(InteractionParams);
+			}
+
+			if (LoadedMagazine && LoadedMagazine->CurrentAmmo == 0)
+			{
+				if(!bHasInternalMagazine)
+				{
+					FInteractionHelperReturnParams InteractionParams;
+					InteractionParams.Tag = TEXT("Eject");
+					InteractionParams.Message = TEXT("Eject");
+					InteractionParams.WorldLocation = LoadedMagazine->GetActorLocation();
+					InteractionParams.HelperState = EInteractionHelperState::Invalid;
+
+					Params.Add(InteractionParams);
+				}
 			}
 		}
 	}
@@ -371,70 +406,71 @@ void AFirearm::SetAmmoPreviewStatus(EAmmoPreviewStatus NewPreviewStatus)
 	OnNearbyHeldAmmoChanged(AmmoPreviewStatus);
 }
 
-void AFirearm::OnBeginInteraction(AHand* Hand)
+void AFirearm::OnBeginInteraction(AHand* Hand, const AInteractionHelper* Helper)
 {
-	Super::OnBeginInteraction(Hand);
+	Super::OnBeginInteraction(Hand, Helper);
 
-	TArray<FInteractionHelperReturnParams> Params;
-	GetInteractionConditions(Hand, Params);
-
-	for(auto Param : Params)
+	if (!Helper)
 	{
-		if (!Param.bCanUse)
-		{
-			continue;
-		}
+		return;
+	}
 
-		if (Param.Tag == TEXT("Grip"))
-		{
-			bUsingGrip = true;
-		}
+	const FInteractionHelperReturnParams& Param = Helper->InteractionParams;
+	if (Param.Tag == TEXT("Grip"))
+	{
+		bUsingGrip = true;
+	}
 
-		if (Param.Tag == TEXT("Slide"))
-		{
-			bUsingSlide = true;
-		}
+	if (Param.Tag == TEXT("Slide"))
+	{
+		bUsingSlide = true;
+	}
 
-		if (Param.Tag == TEXT("Trigger"))
+	if (Param.Tag == TEXT("Trigger"))
+	{
+		if (ChamberedRoundStatus == EChamberedRoundStatus::NoRound || ChamberedRoundStatus == EChamberedRoundStatus::Spent)
 		{
-			if (ChamberedRoundStatus == EChamberedRoundStatus::NoRound || ChamberedRoundStatus == EChamberedRoundStatus::Spent)
+			UGameplayStatics::PlaySoundAtLocation(this, DryFireSound, FirearmMesh->GetSocketLocation(MuzzleBone));
+
+			if (bOpenBolt && SlideProgress > 0.0f)
 			{
-				UGameplayStatics::PlaySoundAtLocation(this, DryFireSound, FirearmMesh->GetSocketLocation(MuzzleBone));
-
-				if (bOpenBolt && SlideProgress > 0.0f)
+				// Slide it forward
+				if (bHasSlidBack)
 				{
-					// Slide it forward
-					if (bHasSlidBack)
-					{
-						LoadRoundFromMagazine();
-						bHasSlidBack = false;
-					}
-
-					SlideProgress = 0.0f;
-					OnSlideForward();
-				}
-				else
-				{
-					OnDryFire();
+					LoadRoundFromMagazine();
+					bHasSlidBack = false;
 				}
 
-				return;
+				SlideProgress = 0.0f;
+				OnSlideForward();
+			}
+			else
+			{
+				OnDryFire();
 			}
 
-			bTriggerDown = true;
+			return;
 		}
+
+		bTriggerDown = true;
 	}
 }
 
-void AFirearm::OnEndInteraction(AHand* Hand)
+void AFirearm::OnEndInteraction(AHand* Hand, const AInteractionHelper* Helper)
 {
-	Super::OnEndInteraction(Hand);
+	Super::OnEndInteraction(Hand, Helper);
 
-	if (Hand == AttachedHand)
+	if (!Helper)
+	{
+		return;
+	}
+
+	if (Helper->InteractionParams.Tag == TEXT("Trigger"))
 	{
 		bTriggerDown = false;
 	}
-	else
+
+	if (Helper->InteractionParams.Tag == TEXT("Grip"))
 	{
 		if (bUsingGrip)
 		{
@@ -442,12 +478,15 @@ void AFirearm::OnEndInteraction(AHand* Hand)
 			{
 				GetAttachedHand()->GetWeaponMountOrigin()->SetRelativeRotation(FRotator::ZeroRotator);
 			}
-	
+
 			bUsingGrip = false;
 
 			//Hand->ResetMeshToOrigin();
 		}
+	}
 
+	if (Helper->InteractionParams.Tag == TEXT("Slide"))
+	{
 		if (bUsingSlide)
 		{
 			bUsingSlide = false;
@@ -607,6 +646,11 @@ void AFirearm::Fire()
 	for (int i = 0; i < BulletsPerShot; i++)
 	{
 		float MuzzleSpread = Spread;
+
+		if(bUsingGrip)
+		{
+			MuzzleSpread = SpreadWithGrip;
+		}
 
 		if (AttachedCharacter)
 		{

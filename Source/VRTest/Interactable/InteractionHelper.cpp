@@ -4,47 +4,38 @@
 
 AInteractionHelper::AInteractionHelper()
 {
-	bInitialized = false;
 	SetActorEnableCollision(false);
 }
 
 void AInteractionHelper::SetHelperParams(FInteractionHelperReturnParams& Param)
 {
-	ensure(Param.AssociatedActor);
+	auto OldParams = InteractionParams;
+	const bool bUseStateChanged = Param.HelperState != OldParams.HelperState;
 
-	SetActorHiddenInGame(false);
 	SetActorLocation(Param.WorldLocation);
 
-	auto OldParams = InteractionParams;
+	if (Param.bShouldRender)
+	{
+		SetActorHiddenInGame(false);
+	}
+	else
+	{
+		SetActorHiddenInGame(true);
+	}
 
 	InteractionParams = Param;
 
-	bool bNewHelperParams = Param.Tag != OldParams.Tag || Param.AssociatedActor != OldParams.AssociatedActor;
-	bool bResetEvents = !bInitialized || InteractionParams.bCanUse != OldParams.bCanUse || bNewHelperParams;
-
-	if(bResetEvents)
+	if (bUseStateChanged)
 	{
-		bInitialized = true;
-
-		// State changed
-		if (Param.bCanUse)
-		{
-			OnInteractionEnabled();
-		}
-		else
-		{
-			OnInteractionDisabled();
-		}
+		OnInteractionStateChanged();
 	}
 }
 
-void AInteractionHelper::SetNoHelper()
+void AInteractionHelper::SetHidden()
 {
-	InteractionParams = FInteractionHelperReturnParams();
+	FInteractionHelperReturnParams Params;
+	Params.bShouldRender = false;
+	Params.HelperState = EInteractionHelperState::Uninitialized;
 
-	// Hide this helper from the game view 
-	SetActorHiddenInGame(true);
-
-	bInitialized = false;
+	SetHelperParams(Params);
 }
-

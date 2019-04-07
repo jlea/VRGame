@@ -10,7 +10,9 @@
 class AHand;
 class AHUD;
 class USoundCue;
+class AInteractionHelper;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractableActorInteractionEvent, AInteractableActor*, InteractableActor, const AInteractionHelper*, Helper);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractableActorEvent, AInteractableActor*, InteractableActor);
 
 UCLASS()
@@ -54,22 +56,22 @@ public:
 
 protected:
 	virtual void OnBeginPickup(AHand* Hand);
-	virtual void OnBeginInteraction(AHand* Hand);
+	virtual void OnBeginInteraction(AHand* Hand, const AInteractionHelper* Helper);
 	virtual void OnDrop(AHand* Hand);
-	virtual void OnEndInteraction(AHand* Hand);
+	virtual void OnEndInteraction(AHand* Hand, const AInteractionHelper* Helper);
 	virtual void OnDirectionalPad(AHand* Hand, const EDirectionPadInput Direction) { ; }
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "VR")
 	void ReceiveOnBeginPickup(AHand* Hand);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "VR")
-	void ReceiveOnBeginInteraction(AHand* Hand);
+	void ReceiveOnBeginInteraction(AHand* Hand, const AInteractionHelper* Helper);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "VR")
 	void ReceiveOnDrop(AHand* Hand);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "VR")
-	void ReceiveOnEndInteraction(AHand* Hand);
+	void ReceiveOnEndInteraction(AHand* Hand, const AInteractionHelper* Helper);
 
 	UPROPERTY(BlueprintReadOnly)
 	AHand*	AttachedHand;
@@ -91,10 +93,10 @@ public:
 	//	Delegates
 
 	UPROPERTY(BlueprintAssignable, Category = "VR")
-	FInteractableActorEvent OnInteractionStart;
+	FInteractableActorInteractionEvent OnInteractionStart;
 
 	UPROPERTY(BlueprintAssignable, Category = "VR")
-	FInteractableActorEvent OnInteractionEnd;
+	FInteractableActorInteractionEvent OnInteractionEnd;
 
 	UPROPERTY(BlueprintAssignable, Category = "VR")
 	FInteractableActorEvent OnDropDelegate;

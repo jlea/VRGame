@@ -30,6 +30,15 @@ enum class EInteractPriority : uint8
 	High
 };
 
+UENUM(BlueprintType)
+enum class EInteractionHelperState : uint8
+{
+	Uninitialized,
+	Invalid,
+	Valid,
+	Active
+};
+
 USTRUCT(BlueprintType)
 struct FInteractionHelperReturnParams
 {
@@ -42,24 +51,20 @@ struct FInteractionHelperReturnParams
 	UPROPERTY(BlueprintReadOnly)
 	FString Tag;
 
-	/* what should be displayed to the user when this helper is visible */
+	/* What message should be displayed to the user when this helper is visible */
 	UPROPERTY(BlueprintReadOnly)
 	FString Message;
 
 	UPROPERTY(BlueprintReadOnly)
-	bool	bRenderHelper;
+	EInteractionHelperState HelperState;
 
 	UPROPERTY(BlueprintReadOnly)
-	bool	bCanUse;
-
-	UPROPERTY()
-	AActor* AssociatedActor;
+	bool bShouldRender;
 
 	/** defaults */
 	FInteractionHelperReturnParams()
 	{
-		bRenderHelper = true;
-		bCanUse = true;
-		AssociatedActor = nullptr;
+		bShouldRender = true;
+		HelperState = EInteractionHelperState::Invalid;
 	}
 };

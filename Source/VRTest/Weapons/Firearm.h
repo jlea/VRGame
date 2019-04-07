@@ -97,8 +97,8 @@ public:
 
 	virtual void GetInteractionConditions(const AHand* InteractingHand, TArray<FInteractionHelperReturnParams>& Params) const;
 
-	virtual void OnBeginInteraction(AHand* Hand) override;
-	virtual void OnEndInteraction(AHand* Hand) override;
+	virtual void OnBeginInteraction(AHand* Hand, const AInteractionHelper* Helper) override;
+	virtual void OnEndInteraction(AHand* Hand, const AInteractionHelper* Helper) override;
 	virtual void OnBeginPickup(AHand* Hand) override;
 	virtual void OnDrop(AHand* Hand) override;
 	virtual void OnDirectionalPad(AHand* Hand, const EDirectionPadInput Direction) override;
@@ -251,6 +251,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Gameplay")
 	float SpreadAI;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Gameplay", meta = (EditCondition = bUseTwoHandedGrip))
+	float SpreadWithGrip;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Gameplay")
 	int32 BulletsPerShot;

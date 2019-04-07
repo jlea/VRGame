@@ -75,6 +75,9 @@ protected:
 	UPROPERTY()
 	TArray<AInteractionHelper*>	InteractionHelpers;
 
+	UPROPERTY()
+	AInteractionHelper* ActiveInteractionHelper;
+
 public:	
 
 	//////////////////////////////////////////////////////////////////////////
@@ -114,6 +117,9 @@ public:
 	EHandGripState GripState;
 
 	UFUNCTION(BlueprintPure, Category = "Hand")
+	AInteractionHelper* GetActiveInteractionHelper() const { return ActiveInteractionHelper; }
+
+	UFUNCTION(BlueprintPure, Category = "Hand")
 	AInteractableActor*	GetClosestActorToHand() { return ClosestNearbyActor; }
 
 	UFUNCTION(BlueprintPure, Category = "Hand")
@@ -135,6 +141,7 @@ private:
 	void UpdateTeleport();
 
 	void UpdateNearbyActors();
+	void UpdateHelpers();
 
 	void Grab(AInteractableActor* InteractableActor);
 	void ReleaseActor();

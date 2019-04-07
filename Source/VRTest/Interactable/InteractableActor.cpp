@@ -56,7 +56,7 @@ void AInteractableActor::BeginGrab(AHand* Hand)
 {
 	if (AttachedHand)
 	{
-		OnBeginInteraction(Hand);
+		OnBeginInteraction(Hand, Hand->GetActiveInteractionHelper());
 	}
 	else
 	{
@@ -76,7 +76,7 @@ void AInteractableActor::EndGrab(AHand* Hand)
 
 	if (InteractingHands.Contains(Hand))
 	{
-		OnEndInteraction(Hand);
+		OnEndInteraction(Hand, Hand->GetActiveInteractionHelper());
 	}
 }
 
@@ -89,7 +89,7 @@ void AInteractableActor::Drop(AHand* Hand)
 
 	if (InteractingHands.Contains(Hand))
 	{
-		OnEndInteraction(Hand);
+		OnEndInteraction(Hand, Hand->GetActiveInteractionHelper());
 	}
 }
 
@@ -127,7 +127,11 @@ void AInteractableActor::GetInteractionConditions(const AHand* InteractingHand, 
 	// Can't grab.. already holding
 	if (AttachedHand && AttachedHand == InteractingHand)
 	{
-		InteractionParams.bCanUse = false;
+		InteractionParams.HelperState = EInteractionHelperState::Invalid;
+	}
+	else
+	{
+		InteractionParams.HelperState = EInteractionHelperState::Valid;
 	}
 
 	ReturnParams.Add(InteractionParams);
@@ -184,17 +188,15 @@ void AInteractableActor::OnBeginPickup(AHand* Hand)
 	OnPickedUpDelegate.Broadcast(this);
 }
 
-void AInteractableActor::OnBeginInteraction(AHand* Hand)
+void AInteractableActor::OnBeginInteraction(AHand* Hand, const AInteractionHelper* Helper)
 {
 	check(!InteractingHands.Contains(Hand));
-
-	//GEngine->AddOnScreenDebugMessage(1, 2.0f, FColor::Green, FString::Printf(TEXT("%s: Interacting"), *GetName()), true, FVector2D(3.0f, 3.0f));
 
 	// Already attached, so assume this is an interaction
 	InteractingHands.Add(Hand);
 
-	ReceiveOnBeginInteraction(Hand);
-	OnInteractionStart.Broadcast(this);
+	ReceiveOnBeginInteraction(Hand, Helper);
+	OnInteractionStart.Broadcast(this, Helper);
 }
 
 void AInteractableActor::OnDrop(AHand* Hand)
@@ -217,13 +219,13 @@ void AInteractableActor::OnDrop(AHand* Hand)
 	OnDropDelegate.Broadcast(this);
 }
 
-void AInteractableActor::OnEndInteraction(AHand* Hand)
+void AInteractableActor::OnEndInteraction(AHand* Hand, const AInteractionHelper* Helper)
 {
 	check(InteractingHands.Contains(Hand));
 
 	InteractingHands.Remove(Hand);
 
 	// BP event
-	ReceiveOnEndInteraction(Hand);
-	OnInteractionEnd.Broadcast(this);
+	ReceiveOnEndInteraction(Hand, Helper);
+	OnInteractionEnd.Broadcast(this, Helper);
 }

@@ -83,7 +83,7 @@ FText AMagazine::GetDefaultInteractionMessage() const
 {
 	if (AttachedFirearm)
 	{
-		return FText::FromString("Eject Magazine");
+		return FText::FromString("Eject");
 	}
 	else
 	{
