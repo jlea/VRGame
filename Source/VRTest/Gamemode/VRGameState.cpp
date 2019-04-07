@@ -48,6 +48,11 @@ void AVRGameState::AddSpawnedCharacter(AExtendedCharacter* Character)
 
 void AVRGameState::TriggerBulletTime(float Duration)
 {
+	if (!bBulletTime)
+	{
+		OnBulletTimeBegin();
+	}
+
 	UGameplayStatics::SetGlobalPitchModulation(this, BulletTimeModifier, 1.0f);
 	bBulletTime = true;
 
@@ -112,6 +117,8 @@ void AVRGameState::FinishBulletTime()
 {
 	UGameplayStatics::SetGlobalPitchModulation(this, 1.0f, 1.0f);
 	bBulletTime = false;
+
+	OnBulletTimeFinish();
 }
 
 void AVRGameState::ResetScores()
