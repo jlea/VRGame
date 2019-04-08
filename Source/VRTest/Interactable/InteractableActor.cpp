@@ -15,7 +15,7 @@ AInteractableActor::AInteractableActor()
 
 	AttachedHand = nullptr;
 
-	DefaultInteractionText = FText::FromString("Pick Up");
+	DefaultInteractionText = FText::FromString("Grab");
 	InteractPriority = EInteractPriority::Low;
 
 	bDropOnRelease = true;

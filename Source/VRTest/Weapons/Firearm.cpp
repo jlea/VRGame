@@ -348,13 +348,13 @@ void AFirearm::GetInteractionConditions(const AHand* InteractingHand, TArray<FIn
 
 				FInteractionHelperReturnParams InteractionParams;
 				InteractionParams.Tag = TEXT("Slide");
-				InteractionParams.Message = TEXT("Pull slide");
+				InteractionParams.Message = TEXT("Pull");
 				InteractionParams.WorldLocation = SlideBoneLocation;
 
 				// Only display the slide interaction when we need it
 				InteractionParams.bShouldRender = false;
 
-				if (ChamberedRoundStatus != EChamberedRoundStatus::Fresh)
+				if (ChamberedRoundStatus != EChamberedRoundStatus::Fresh && !bHasSlidBack)
 				{
 					if (LoadedMagazine && LoadedMagazine->CurrentAmmo > 0)
 					{
