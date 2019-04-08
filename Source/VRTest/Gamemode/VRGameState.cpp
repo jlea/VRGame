@@ -73,12 +73,6 @@ void AVRGameState::OnCharacterKilled(AExtendedCharacter* Character, AController*
 			bShouldBulletTime = true;
 		}
 
-		// Killed the last character
-		if (NumDeadCharacters == SpawnedCharacters.Num())
-		{
-			bShouldBulletTime = true;
-		}
-
 		if (bShouldBulletTime)
 		{
 			TriggerBulletTime(BulletTimeDuration);
