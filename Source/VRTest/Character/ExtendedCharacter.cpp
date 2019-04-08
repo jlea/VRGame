@@ -292,7 +292,7 @@ float AExtendedCharacter::TakeDamage(float Damage, struct FDamageEvent const& Da
 				const FVector ImpactDir = -AttackDir;
 				const FRotator LookRot = GetMesh()->GetComponentRotation();
 
-				const FRotator RotationDelta = (ImpactDir.Rotation() - LookRot).GetNormalized();
+				const FRotator RotationDelta = (AttackDir.Rotation() - LookRot).GetNormalized();
 
 				if (EquippedFirearm)
 				{
@@ -596,8 +596,8 @@ void AExtendedCharacter::SeverLimb(FHitResult Hit)
 	// Spurt flow at the location we just tore off from
 	if (LimbFlowEffect)
 	{
-		FTransform SocketTransform = GetMesh()->GetSocketTransform(Hit.BoneName);
-		UGameplayStatics::SpawnEmitterAttached(LimbTearEffect, GetMesh(), NAME_None, SocketTransform.GetLocation(), SocketTransform.GetRotation().Rotator(), EAttachLocation::KeepWorldPosition);
+		FTransform SocketTransform = GetMesh()->GetSocketTransform(Hit.BoneName, RTS_Component);
+		UGameplayStatics::SpawnEmitterAttached(LimbFlowEffect, GetMesh(), NAME_None, SocketTransform.GetLocation(), SocketTransform.GetRotation().Rotator(), EAttachLocation::KeepRelativeOffset);
 	}
 
 	static FName CollisionProfileName(TEXT("Ragdoll"));
