@@ -33,6 +33,11 @@ void ATeleportDestination::BeginPlay()
 
 	for (auto Spawner : LinkedSpawners)
 	{
+		if (!Spawner)
+		{
+			continue;
+		}
+
 		Spawner->OnAllPawnsKilledDelegate.AddDynamic(this, &ThisClass::OnSpawnerFinished);
 	}
 }
