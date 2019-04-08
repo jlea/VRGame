@@ -331,6 +331,12 @@ void AFirearm::GetInteractionConditions(const AHand* InteractingHand, TArray<FIn
 						InteractionParams.HelperState = EInteractionHelperState::Valid;
 					}
 
+					// Hide the grip prompt until our weapon is loaded
+					if (ChamberedRoundStatus != EChamberedRoundStatus::Fresh)
+					{
+						InteractionParams.bShouldRender = false;
+					}
+
 					Params.Add(InteractionParams);
 				}
 			}
