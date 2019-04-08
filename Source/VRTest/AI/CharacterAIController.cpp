@@ -477,6 +477,11 @@ void ACharacterAIController::SetLOSToTarget(bool bHasLOS)
 
 int32 ACharacterAIController::GetPriorityForTarget(APawn* Target)
 {
+	if (!Target || !GetPawn())
+	{
+		return 0;
+	}
+
 	//Closer = higher priority
 	float Priority = 0.0f;
 
