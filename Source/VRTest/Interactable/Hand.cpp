@@ -318,11 +318,7 @@ void AHand::OnDropPressed()
 
 void AHand::OnGrabPressed()
 {
-	if (GetPlayerPawn()->bDead)
-	{
-		OnDeadGrabPressed();
-		return;
-	}
+	ReceiveOnGrabPressed();
 
 	bWantsGrab = true;
 
@@ -342,11 +338,7 @@ void AHand::OnGrabPressed()
 
 void AHand::OnGrabReleased()
 {
-	if (GetPlayerPawn()->bDead)
-	{
-		OnDeadGrabReleased();
-		return;
-	}
+	ReceiveOnGrabReleased();
 
 	bWantsGrab = false;
 

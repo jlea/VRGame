@@ -177,8 +177,8 @@ public:
 	void ReceiveOnGrab(AInteractableActor* NewActor);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Hand")
-	void OnDeadGrabPressed();
+	void ReceiveOnGrabPressed();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Hand")
-	void OnDeadGrabReleased();
+	void ReceiveOnGrabReleased();
 };
