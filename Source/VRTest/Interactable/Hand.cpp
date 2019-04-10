@@ -206,9 +206,13 @@ void AHand::UpdateNearbyActors()
 	if (ClosestNearbyActor != OldNearbyActor)
 	{
 		// Reset our interaction helpers
-		for (int i = 0; i < InteractionHelpers.Num(); i++)
+		for (auto InteractionHelper : InteractionHelpers)
 		{
-			AInteractionHelper* InteractionHelper = InteractionHelpers[i];
+			if (!InteractionHelper)
+			{
+				continue;
+			}
+
 			InteractionHelper->SetHidden();
 		}
 
@@ -285,11 +289,17 @@ void AHand::UpdateHelpers()
 	for (int i = 0; i < InteractionHelpers.Num(); i++)
 	{
 		AInteractionHelper* InteractionHelper = InteractionHelpers[i];
+		if (!InteractionHelper)
+		{
+			continue;
+		}
+
 		if (!HelperParams.IsValidIndex(i))
 		{
 			InteractionHelper->SetHidden();
 			continue;
 		}
+
 		FInteractionHelperReturnParams& Param = HelperParams[i];
 
 		if (ActiveInteractionHelper == InteractionHelper)
