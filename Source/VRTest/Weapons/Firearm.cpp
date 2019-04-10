@@ -374,7 +374,8 @@ void AFirearm::GetInteractionConditions(const AHand* InteractingHand, TArray<FIn
 				Params.Add(InteractionParams);
 			}
 
-			if (LoadedMagazine && LoadedMagazine->CurrentAmmo == 0)
+			// Only display eject prompt when totally empty
+			if (LoadedMagazine && LoadedMagazine->CurrentAmmo == 0 && ChamberedRoundStatus != EChamberedRoundStatus::Fresh)
 			{
 				if(!bHasInternalMagazine)
 				{
